@@ -206,6 +206,7 @@ class MessagesPresenter(
         val roomMemberIdentityStateChanges = identityChangeState.roomMemberIdentityStateChanges
 
         val isKeyShareOnInviteEnabled by featureFlagService.isFeatureEnabledFlow(FeatureFlags.EnableKeyShareOnInvite).collectAsState(initial = false)
+        val isFoldableFeaturesEnabled by featureFlagService.isFeatureEnabledFlow(FeatureFlags.FoldableFeatures).collectAsState(initial = false)
         // The top bar should show a "history" icon if:
         //   * History sharing is enabled,
         //   * The room is encrypted, and:
@@ -296,6 +297,7 @@ class MessagesPresenter(
             roomMemberModerationState = roomMemberModerationState,
             topBarSharedHistoryIcon = topBarSharedHistoryIcon,
             successorRoom = roomInfo.successorRoom,
+            isFoldableFeaturesEnabled = isFoldableFeaturesEnabled,
             eventSink = ::handleEvent,
         )
     }
