@@ -76,6 +76,7 @@ dependencies {
     implementation(libs.vanniktech.blurhash)
     implementation(libs.telephoto.zoomableimage)
     implementation(libs.matrix.emojibase.bindings)
+    implementation(libs.androidx.window)
     implementation(projects.features.knockrequests.api)
     implementation(projects.features.roommembermoderation.api)
 
