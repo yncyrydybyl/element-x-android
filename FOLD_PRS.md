@@ -7,6 +7,7 @@ PRs to merge when creating a fold-optimized build from `yellow-accent`.
 | PR | Feature | Status | Lines |
 |----|---------|--------|-------|
 | [#21](https://github.com/yncyrydybyl/element-x-android/pull/21) | Tabletop media viewer (info + actions in bottom half) | Tested on Pixel 10 Pro Fold | +218 |
+| [#22](https://github.com/yncyrydybyl/element-x-android/pull/22) | Dual-pane thread book (timeline + thread placeholder) | Tested on Pixel 10 Pro Fold | +96 |
 
 ## Scaffolds (UI built, needs wiring)
 
@@ -18,7 +19,7 @@ PRs to merge when creating a fold-optimized build from `yellow-accent`.
 | [#15](https://github.com/yncyrydybyl/element-x-android/pull/15) | Flex voice studio | UI + strings | +598 |
 | [#16](https://github.com/yncyrydybyl/element-x-android/pull/16) | Photo director mode | UI scaffold | +388 |
 | [#17](https://github.com/yncyrydybyl/element-x-android/pull/17) | Ambient presence display | UI scaffold | +387 |
-| [#18](https://github.com/yncyrydybyl/element-x-android/pull/18) | Thread book dual-pane | UI scaffold | +211 |
+| ~~#18~~ | ~~Thread book dual-pane~~ | Replaced by #22 | — |
 | [#19](https://github.com/yncyrydybyl/element-x-android/pull/19) | Campfire dual-perspective | UI scaffold | +337 |
 | [#20](https://github.com/yncyrydybyl/element-x-android/pull/20) | Rear camera selfie share | UI scaffold | +275 |
 
