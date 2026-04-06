@@ -176,4 +176,13 @@ enum class FeatureFlags(
         defaultValue = { false },
         isFinished = false,
     ),
+    FoldableFeatures(
+        key = "feature.foldable",
+        title = "Foldable device features",
+        description = "Enable adaptive layouts and interactions optimized for foldable devices like Pixel 10 Pro Fold." +
+            " Includes tabletop mode, dual-pane thread view, cover screen quick-reply, and fold-aware gestures.",
+        defaultValue = { false },
+        isFinished = false,
+        isInLabs = true,
+    ),
 }

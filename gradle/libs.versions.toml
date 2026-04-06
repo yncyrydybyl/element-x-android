@@ -20,6 +20,7 @@ activity = "1.13.0"
 media3 = "1.9.3"
 camera = "1.5.3"
 work = "2.11.2"
+window = "1.5.1"
 
 # Compose
 compose_bom = "2026.03.01"
@@ -123,6 +124,8 @@ androidx_compose_bom = { module = "androidx.compose:compose-bom", version.ref = 
 androidx_compose_material3 = { module = "androidx.compose.material3:material3", version = '1.5.0-alpha15' }
 androidx_compose_material3_windowsizeclass = { module = "androidx.compose.material3:material3-window-size-class" }
 androidx_compose_material3_adaptive = "androidx.compose.material3:material3-adaptive-android:1.0.0-alpha06"
+androidx_window = { module = "androidx.window:window", version.ref = "window" }
+androidx_window_testing = { module = "androidx.window:window-testing", version.ref = "window" }
 androidx_compose_ui = { module = "androidx.compose.ui:ui" }
 androidx_compose_ui_tooling = { module = "androidx.compose.ui:ui-tooling" }
 androidx_compose_ui_tooling_preview = { module = "androidx.compose.ui:ui-tooling-preview" }
