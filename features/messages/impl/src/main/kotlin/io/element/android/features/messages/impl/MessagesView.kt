@@ -53,6 +53,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import io.element.android.compound.theme.ElementTheme
 import io.element.android.features.messages.api.timeline.voicemessages.composer.VoiceMessageComposerEvent
+import io.element.android.features.messages.impl.adaptive.DualPaneMessagesLayout
 import io.element.android.features.messages.impl.actionlist.ActionListEvent
 import io.element.android.features.messages.impl.actionlist.ActionListView
 import io.element.android.features.messages.impl.actionlist.model.TimelineItemAction
@@ -195,8 +196,16 @@ fun MessagesView(
     }
 
     val expandableState = rememberExpandableBottomSheetLayoutState()
+    DualPaneMessagesLayout(
+        enabled = state.isFoldableFeaturesEnabled,
+        roomName = state.roomName,
+        roomAvatar = state.roomAvatar,
+        roomTopic = state.roomTopic,
+        roomMemberCount = state.roomMemberCount,
+        modifier = modifier,
+    ) {
     ExpandableBottomSheetLayout(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .imePadding()
             .systemBarsPadding()
@@ -342,6 +351,7 @@ fun MessagesView(
         },
         maxBottomSheetContentHeight = maxComposerHeightPx.toDp(),
     )
+    } // DualPaneMessagesLayout
 
     var endPollConfirmingEvent: TimelineItem.Event? by remember { mutableStateOf(null) }
 

@@ -122,6 +122,9 @@ fun aMessagesState(
     roomMemberModerationState: RoomMemberModerationState = aRoomMemberModerationState(),
     topBarSharedHistoryIcon: SharedHistoryIcon = SharedHistoryIcon.NONE,
     successorRoom: SuccessorRoom? = null,
+    isFoldableFeaturesEnabled: Boolean = false,
+    roomTopic: String? = null,
+    roomMemberCount: Long = 0,
     eventSink: (MessagesEvent) -> Unit = {},
 ) = MessagesState(
     roomId = RoomId("!id:domain"),
@@ -150,6 +153,9 @@ fun aMessagesState(
     roomMemberModerationState = roomMemberModerationState,
     topBarSharedHistoryIcon = topBarSharedHistoryIcon,
     successorRoom = successorRoom,
+    isFoldableFeaturesEnabled = isFoldableFeaturesEnabled,
+    roomTopic = roomTopic,
+    roomMemberCount = roomMemberCount,
     eventSink = eventSink,
 )
 
