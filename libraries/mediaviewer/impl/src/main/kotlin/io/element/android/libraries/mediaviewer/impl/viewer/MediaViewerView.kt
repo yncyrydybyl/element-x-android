@@ -145,48 +145,61 @@ fun MediaViewerView(
                     LaunchedEffect(Unit) {
                         state.eventSink(MediaViewerEvents.LoadMedia(dataForPage))
                     }
-                    Box(
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        val isDisplayed = remember(pagerState.settledPage) {
-                            // This 'item provider' lambda will be called when the data source changes with an outdated `settlePage` value
-                            // So we need to update this value only when the `settledPage` value changes. It seems like a bug that needs to be fixed in Compose.
-                            page == pagerState.settledPage
-                        }
-                        MediaViewerPage(
-                            isDisplayed = isDisplayed,
-                            showOverlay = showOverlay,
-                            bottomPaddingInPixels = bottomPaddingInPixels,
-                            data = dataForPage,
-                            textFileViewer = textFileViewer,
-                            onDismiss = onBackClick,
-                            onRetry = {
-                                state.eventSink(MediaViewerEvents.LoadMedia(dataForPage))
-                            },
-                            onDismissError = {
-                                state.eventSink(MediaViewerEvents.ClearLoadingError(dataForPage))
-                            },
-                            onShowOverlayChange = {
-                                showOverlay = it
-                            },
-                            audioFocus = audioFocus,
-                            isUserSelected = (state.listData[page] as? MediaViewerPageData.MediaViewerData)?.eventId == state.initiallySelectedEventId,
-                        )
-                        // Bottom bar
-                        AnimatedVisibility(visible = showOverlay, enter = fadeIn(), exit = fadeOut()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .navigationBarsPadding()
-                            ) {
-                                MediaViewerBottomBar(
-                                    modifier = Modifier.align(Alignment.BottomCenter),
-                                    showDivider = dataForPage.mediaInfo.mimeType.isMimeTypeVideo(),
-                                    caption = dataForPage.mediaInfo.caption,
-                                    onHeightChange = { bottomPaddingInPixels = it },
-                                )
+                    val isDisplayed = remember(pagerState.settledPage) {
+                        // This 'item provider' lambda will be called when the data source changes with an outdated `settlePage` value
+                        // So we need to update this value only when the `settledPage` value changes. It seems like a bug that needs to be fixed in Compose.
+                        page == pagerState.settledPage
+                    }
+                    val pageContent: @Composable () -> Unit = {
+                        Box(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            MediaViewerPage(
+                                isDisplayed = isDisplayed,
+                                showOverlay = showOverlay,
+                                bottomPaddingInPixels = bottomPaddingInPixels,
+                                data = dataForPage,
+                                textFileViewer = textFileViewer,
+                                onDismiss = onBackClick,
+                                onRetry = {
+                                    state.eventSink(MediaViewerEvents.LoadMedia(dataForPage))
+                                },
+                                onDismissError = {
+                                    state.eventSink(MediaViewerEvents.ClearLoadingError(dataForPage))
+                                },
+                                onShowOverlayChange = {
+                                    showOverlay = it
+                                },
+                                audioFocus = audioFocus,
+                                isUserSelected = (state.listData[page] as? MediaViewerPageData.MediaViewerData)?.eventId == state.initiallySelectedEventId,
+                            )
+                            // Bottom bar
+                            AnimatedVisibility(visible = showOverlay, enter = fadeIn(), exit = fadeOut()) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .navigationBarsPadding()
+                                ) {
+                                    MediaViewerBottomBar(
+                                        modifier = Modifier.align(Alignment.BottomCenter),
+                                        showDivider = dataForPage.mediaInfo.mimeType.isMimeTypeVideo(),
+                                        caption = dataForPage.mediaInfo.caption,
+                                        onHeightChange = { bottomPaddingInPixels = it },
+                                    )
+                                }
                             }
                         }
+                    }
+                    if (state.isFoldableFeaturesEnabled) {
+                        FoldAwareMediaWrapper(
+                            mediaInfo = dataForPage.mediaInfo,
+                            eventId = dataForPage.eventId,
+                            eventSink = state.eventSink,
+                            data = dataForPage,
+                            content = pageContent,
+                        )
+                    } else {
+                        pageContent()
                     }
                 }
             }

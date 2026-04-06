@@ -201,6 +201,7 @@ fun aMediaViewerState(
     listData: List<MediaViewerPageData> = listOf(aMediaViewerPageData()),
     currentIndex: Int = 0,
     canShowInfo: Boolean = true,
+    isFoldableFeaturesEnabled: Boolean = false,
     mediaBottomSheetState: MediaBottomSheetState = MediaBottomSheetState.Hidden,
     eventSink: (MediaViewerEvents) -> Unit = {},
 ) = MediaViewerState(
@@ -209,6 +210,7 @@ fun aMediaViewerState(
     currentIndex = currentIndex,
     snackbarMessage = null,
     canShowInfo = canShowInfo,
+    isFoldableFeaturesEnabled = isFoldableFeaturesEnabled,
     mediaBottomSheetState = mediaBottomSheetState,
     eventSink = eventSink,
 )

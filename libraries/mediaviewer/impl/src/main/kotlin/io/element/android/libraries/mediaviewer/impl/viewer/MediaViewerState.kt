@@ -25,6 +25,7 @@ data class MediaViewerState(
     val currentIndex: Int,
     val snackbarMessage: SnackbarMessage?,
     val canShowInfo: Boolean,
+    val isFoldableFeaturesEnabled: Boolean,
     val mediaBottomSheetState: MediaBottomSheetState,
     val eventSink: (MediaViewerEvents) -> Unit,
 )
