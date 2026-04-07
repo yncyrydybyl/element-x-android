@@ -47,6 +47,7 @@ import io.element.android.features.home.impl.components.HomeTopBar
 import io.element.android.features.home.impl.components.RoomListContentView
 import io.element.android.features.home.impl.components.RoomListMenuAction
 import io.element.android.features.home.impl.model.RoomListRoomSummary
+import io.element.android.features.home.impl.roomlist.RoomListContentState
 import io.element.android.features.home.impl.roomlist.RoomListContextMenu
 import io.element.android.features.home.impl.roomlist.RoomListDeclineInviteMenu
 import io.element.android.features.home.impl.roomlist.RoomListEvent
@@ -57,6 +58,8 @@ import io.element.android.features.home.impl.spacefilters.SpaceFiltersState
 import io.element.android.features.home.impl.spacefilters.SpaceFiltersView
 import io.element.android.features.home.impl.spaces.HomeSpacesView
 import io.element.android.libraries.androidutils.throttler.FirstThrottler
+import io.element.android.libraries.designsystem.foldable.CoverScreenQuickReply
+import io.element.android.libraries.designsystem.foldable.CoverScreenRoom
 import io.element.android.libraries.designsystem.preview.ElementPreview
 import io.element.android.libraries.designsystem.preview.PreviewsDayNight
 import io.element.android.libraries.designsystem.theme.components.FloatingActionButton
@@ -249,6 +252,18 @@ private fun HomeScaffold(
             )
             when (state.currentHomeNavigationBarItem) {
                 HomeNavigationBarItem.Chats -> {
+                    if (state.isFoldableFeaturesEnabled) {
+                        FoldableQuickReplyHeader(
+                            contentState = roomListState.contentState,
+                            onRoomClick = { onRoomClick(RoomId(it)) },
+                            modifier = Modifier
+                                .padding(
+                                    top = padding.calculateTopPadding(),
+                                    start = padding.calculateStartPadding(LocalLayoutDirection.current),
+                                    end = padding.calculateEndPadding(LocalLayoutDirection.current),
+                                )
+                        )
+                    }
                     RoomListContentView(
                         contentState = roomListState.contentState,
                         filtersState = roomListState.filtersState,
@@ -343,6 +358,39 @@ private fun HomeBottomBar(
 }
 
 internal fun RoomListRoomSummary.contentType() = displayType.ordinal
+
+@Composable
+private fun FoldableQuickReplyHeader(
+    contentState: RoomListContentState,
+    onRoomClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val rooms = (contentState as? RoomListContentState.Rooms)?.summaries
+        ?.asSequence()
+        ?.filter { !it.isSpace }
+        ?.take(3)
+        ?.map { summary ->
+            CoverScreenRoom(
+                roomId = summary.roomId.value,
+                name = summary.name ?: summary.roomId.value,
+                avatarData = summary.avatarData,
+                lastMessagePreview = summary.latestEvent.content()?.toString(),
+                timestamp = summary.timestamp,
+                hasUnread = summary.hasNewContent,
+            )
+        }
+        ?.toList()
+        .orEmpty()
+
+    if (rooms.isNotEmpty()) {
+        CoverScreenQuickReply(
+            rooms = rooms,
+            onRoomClick = onRoomClick,
+            onRoomLongClick = {},
+            modifier = modifier,
+        )
+    }
+}
 
 @PreviewsDayNight
 @Composable

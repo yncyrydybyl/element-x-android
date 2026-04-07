@@ -28,6 +28,8 @@ import io.element.android.features.rageshake.api.RageshakeFeatureAvailability
 import io.element.android.libraries.architecture.Presenter
 import io.element.android.libraries.designsystem.utils.snackbar.SnackbarDispatcher
 import io.element.android.libraries.designsystem.utils.snackbar.collectSnackbarMessageAsState
+import io.element.android.libraries.featureflag.api.FeatureFlagService
+import io.element.android.libraries.featureflag.api.FeatureFlags
 import io.element.android.libraries.indicator.api.IndicatorService
 import io.element.android.libraries.matrix.api.MatrixClient
 import io.element.android.libraries.matrix.api.sync.SyncService
@@ -48,6 +50,7 @@ class HomePresenter(
     private val rageshakeFeatureAvailability: RageshakeFeatureAvailability,
     private val sessionStore: SessionStore,
     private val announcementService: AnnouncementService,
+    private val featureFlagService: FeatureFlagService,
 ) : Presenter<HomeState> {
     private val currentUserWithNeighborsBuilder = CurrentUserWithNeighborsBuilder()
 
@@ -101,6 +104,7 @@ class HomePresenter(
             }
         }
         val snackbarMessage by snackbarDispatcher.collectSnackbarMessageAsState()
+        val isFoldableFeaturesEnabled by featureFlagService.isFeatureEnabledFlow(FeatureFlags.FoldableFeatures).collectAsState(initial = false)
         return HomeState(
             currentUserAndNeighbors = currentUserAndNeighbors,
             showAvatarIndicator = showAvatarIndicator,
@@ -111,6 +115,7 @@ class HomePresenter(
             snackbarMessage = snackbarMessage,
             canReportBug = canReportBug,
             directLogoutState = directLogoutState,
+            isFoldableFeaturesEnabled = isFoldableFeaturesEnabled,
             eventSink = ::handleEvent,
         )
     }
