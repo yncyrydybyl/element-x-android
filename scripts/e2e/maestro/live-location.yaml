@@ -63,18 +63,22 @@ appId: io.element.android.x.debug
     optional: true
 - eraseText
 - inputText: ${MAESTRO_HOMESERVER_URL}
-# Submit: SearchAccountProvider uses the keyboard's Done action.
+# Give the homeserver resolver a moment to emit the matched provider row.
 - hideKeyboard
-- tapOn:
-    text: "Continue"
+- extendedWaitUntil:
+    visible:
+      text: ${MAESTRO_HOMESERVER_URL}
+    timeout: 10000
     optional: true
-# After the URL resolves, a matching provider row is rendered with
-# the host as its label. Tap the first provider row to proceed.
+# The URL appears twice: index 0 is the TextField itself, index 1 is the
+# matched HomeserverData row rendered below. We want the row.
 - tapOn:
-    text: "10.0.2.2"
+    text: ${MAESTRO_HOMESERVER_URL}
+    index: 1
     optional: true
+# Fallback: some devices only render the row, making index 0 the match.
 - tapOn:
-    text: "http://10.0.2.2:8008"
+    text: ${MAESTRO_HOMESERVER_URL}
     optional: true
 
 # Confirm Account Provider again (now with our custom server).
