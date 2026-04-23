@@ -1,0 +1,20 @@
+# Overrides appended to the synapse-generated homeserver.yaml.
+# Enables open registration so setup-synapse.sh can create test users.
+registration_shared_secret: "e2eregistration"
+enable_registration: true
+enable_registration_without_verification: true
+enable_registration_captcha: false
+rc_registration:
+  per_second: 1000
+  burst_count: 1000
+rc_message:
+  per_second: 1000
+  burst_count: 1000
+rc_login:
+  address:
+    per_second: 1000
+    burst_count: 1000
+  account:
+    per_second: 1000
+    burst_count: 1000
+trusted_key_servers: []

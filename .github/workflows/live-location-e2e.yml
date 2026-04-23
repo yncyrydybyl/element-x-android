@@ -32,35 +32,31 @@ jobs:
       - name: Start Synapse (standalone container)
         run: |
           set -euxo pipefail
+          sudo rm -rf /srv/synapse-data
           sudo mkdir -p /srv/synapse-data
-          sudo cp scripts/e2e/synapse/homeserver.yaml /srv/synapse-data/homeserver.yaml
-          sudo cp scripts/e2e/synapse/log.config /srv/synapse-data/log.config
           sudo chown -R 991:991 /srv/synapse-data || true
           docker rm -f synapse_e2e >/dev/null 2>&1 || true
-          # Generate signing key first (into the mounted data dir).
+          # Let Synapse generate its own default config + signing key.
           docker run --rm \
             -v /srv/synapse-data:/data \
             -e SYNAPSE_SERVER_NAME=e2e.local \
             -e SYNAPSE_REPORT_STATS=no \
             "$SYNAPSE_IMAGE" generate
-          # Overlay our config on top of the generated defaults.
-          sudo cp scripts/e2e/synapse/homeserver.yaml /srv/synapse-data/homeserver.yaml
-          sudo cp scripts/e2e/synapse/log.config /srv/synapse-data/log.config
+          # Append our open-registration overrides to the generated config.
+          sudo tee -a /srv/synapse-data/homeserver.yaml < scripts/e2e/synapse/overrides.yaml >/dev/null
           sudo chown -R 991:991 /srv/synapse-data || true
           docker run -d --name synapse_e2e \
             -p 8008:8008 \
             -v /srv/synapse-data:/data \
             "$SYNAPSE_IMAGE"
-          for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 \
-                  21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 \
-                  41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60; do
+          for _ in $(seq 1 60); do
             if curl -sf http://localhost:8008/_matrix/client/versions >/dev/null; then
               echo "Synapse ready."
               exit 0
             fi
             sleep 2
           done
-          echo "Synapse failed to come up."
+          echo "Synapse failed to come up. Container logs:"
           docker logs synapse_e2e || true
           exit 1
 
