@@ -87,6 +87,7 @@ class ShareLocationPresenter(
         val currentUser by client.userProfile.collectAsState()
         val scope = rememberCoroutineScope()
         var liveLocationDisclaimerAcknowledged by remember { mutableStateOf(false) }
+        var hasAutoRequestedPermissions by remember { mutableStateOf(false) }
 
         fun checkLocationConstraints() {
             val locationConstraints = checkLocationConstraints(permissionsState, locationActions)
@@ -94,7 +95,21 @@ class ShareLocationPresenter(
             trackUserPosition = locationConstraints is LocationConstraintsCheck.Success
         }
 
-        LaunchedEffect(permissionsState.permissions) { checkLocationConstraints() }
+        LaunchedEffect(permissionsState.permissions) {
+            if (
+                !hasAutoRequestedPermissions &&
+                !permissionsState.isAnyGranted &&
+                !permissionsState.shouldShowRationale
+            ) {
+                // Never asked before: trigger the Android system dialog directly
+                // instead of falling into the 'permanently denied' branch that just
+                // opens app settings.
+                hasAutoRequestedPermissions = true
+                permissionsState.eventSink(PermissionsEvents.RequestPermissions)
+            } else {
+                checkLocationConstraints()
+            }
+        }
 
         fun showLiveLocationDurationPicker() {
             val durations = LIVE_LOCATION_DURATIONS.map {
