@@ -136,6 +136,7 @@ fun MessagesView(
     modifier: Modifier = Modifier,
     forceJumpToBottomVisibility: Boolean = false,
     knockRequestsBannerView: @Composable () -> Unit,
+    liveLocationSharingBannerView: @Composable () -> Unit,
 ) {
     OnLifecycleEvent { _, event ->
         state.voiceMessageComposerState.eventSink(VoiceMessageComposerEvent.LifecycleEvent(event))
@@ -271,6 +272,7 @@ fun MessagesView(
                             onJoinCallClick = onJoinCallClick,
                             onViewAllPinnedMessagesClick = onViewAllPinnedMessagesClick,
                             knockRequestsBannerView = knockRequestsBannerView,
+                            liveLocationSharingBannerView = liveLocationSharingBannerView,
                         )
 
                         SuggestionsPickerView(
@@ -430,6 +432,7 @@ private fun MessagesViewContent(
     onSwipeToReply: (TimelineItem.Event) -> Unit,
     modifier: Modifier = Modifier,
     knockRequestsBannerView: @Composable () -> Unit,
+    liveLocationSharingBannerView: @Composable () -> Unit,
 ) {
     Box(
         modifier = modifier
@@ -505,6 +508,7 @@ private fun MessagesViewContent(
                     )
                 }
                 knockRequestsBannerView()
+                liveLocationSharingBannerView()
             }
         }
     }
@@ -601,6 +605,7 @@ internal fun MessagesViewPreview(@PreviewParameter(MessagesStateProvider::class)
         onViewAllPinnedMessagesClick = { },
         forceJumpToBottomVisibility = true,
         knockRequestsBannerView = {},
+        liveLocationSharingBannerView = {},
     )
 }
 
@@ -655,5 +660,6 @@ internal fun MessagesViewA11yPreview() = ElementPreview {
         onViewAllPinnedMessagesClick = { },
         forceJumpToBottomVisibility = true,
         knockRequestsBannerView = {},
+        liveLocationSharingBannerView = {},
     )
 }

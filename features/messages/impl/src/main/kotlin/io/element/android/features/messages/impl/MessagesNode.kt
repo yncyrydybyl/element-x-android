@@ -30,6 +30,7 @@ import dev.zacsweers.metro.AssistedInject
 import io.element.android.annotations.ContributesNode
 import io.element.android.compound.theme.ElementTheme
 import io.element.android.features.knockrequests.api.banner.KnockRequestsBannerRenderer
+import io.element.android.features.location.api.live.LiveLocationSharingBannerRenderer
 import io.element.android.features.messages.impl.actionlist.ActionListPresenter
 import io.element.android.features.messages.impl.actionlist.model.TimelineItemActionPostProcessor
 import io.element.android.features.messages.impl.attachments.Attachment
@@ -93,6 +94,7 @@ class MessagesNode(
     private val mediaPlayer: MediaPlayer,
     private val permalinkParser: PermalinkParser,
     private val knockRequestsBannerRenderer: KnockRequestsBannerRenderer,
+    private val liveLocationSharingBannerRenderer: LiveLocationSharingBannerRenderer,
     private val roomMemberModerationRenderer: RoomMemberModerationRenderer,
 ) : Node(buildContext, plugins = plugins), MessagesNavigator {
     data class Inputs(
@@ -298,6 +300,9 @@ class MessagesNode(
                         modifier = Modifier,
                         onViewRequestsClick = callback::navigateToKnockRequestsList,
                     )
+                },
+                liveLocationSharingBannerView = {
+                    liveLocationSharingBannerRenderer.View(modifier = Modifier)
                 },
             )
             roomMemberModerationRenderer.Render(

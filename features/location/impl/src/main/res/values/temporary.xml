@@ -3,4 +3,7 @@
     <string name="screen_live_location_notification_title">Sharing live location</string>
     <string name="screen_live_location_notification_text">Your location is being shared with this room.</string>
     <string name="screen_live_location_notification_channel_name">Live location sharing</string>
+    <string name="screen_live_location_banner_title">You are sharing your live location</string>
+    <string name="screen_live_location_disclaimer_title">Share your live location?</string>
+    <string name="screen_live_location_disclaimer_message">Anyone in this room will be able to see your location until you stop sharing. This is not end-to-end encrypted in unencrypted rooms.</string>
 </resources>
