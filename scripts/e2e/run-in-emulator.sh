@@ -17,7 +17,8 @@ emit_annotation() {
   local level=$1 title=$2 path=$3
   if [ -s "$path" ]; then
     local msg
-    msg=$(tail -c 4000 "$path" | sed 's/%/%25/g; s/\r/%0D/g' | tr '\n' '\001' | sed 's/\x01/%0A/g')
+    # Annotation message limit is 64KB. Keep the last 60000 chars.
+    msg=$(tail -c 60000 "$path" | sed 's/%/%25/g; s/\r/%0D/g' | tr '\n' '\001' | sed 's/\x01/%0A/g')
     echo "::${level} title=${title}::${msg}"
   fi
 }
