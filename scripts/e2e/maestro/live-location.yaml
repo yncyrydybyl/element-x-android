@@ -63,23 +63,15 @@ appId: io.element.android.x.debug
     optional: true
 - eraseText
 - inputText: ${MAESTRO_HOMESERVER_URL}
-# Give the homeserver resolver a moment to emit the matched provider row.
 - hideKeyboard
+# Wait for the homeserver resolver to emit the matched provider row.
+# Its title is the URL with the scheme stripped (AccountProvider.title).
 - extendedWaitUntil:
     visible:
-      text: ${MAESTRO_HOMESERVER_URL}
-    timeout: 10000
-    optional: true
-# The URL appears twice: index 0 is the TextField itself, index 1 is the
-# matched HomeserverData row rendered below. We want the row.
+      text: "10.0.2.2:8008"
+    timeout: 15000
 - tapOn:
-    text: ${MAESTRO_HOMESERVER_URL}
-    index: 1
-    optional: true
-# Fallback: some devices only render the row, making index 0 the match.
-- tapOn:
-    text: ${MAESTRO_HOMESERVER_URL}
-    optional: true
+    text: "10.0.2.2:8008"
 
 # Confirm Account Provider again (now with our custom server).
 - tapOn:
