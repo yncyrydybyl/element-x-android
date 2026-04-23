@@ -18,3 +18,10 @@ rc_login:
     per_second: 1000
     burst_count: 1000
 trusted_key_servers: []
+
+# Simplified Sliding Sync (MSC4186) — Element X refuses servers that
+# don't advertise it.
+experimental_features:
+  msc4186_enabled: true
+  # Legacy sliding-sync proxy compatibility (MSC3575) belt-and-suspenders.
+  msc3575_enabled: true
