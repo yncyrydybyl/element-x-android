@@ -17,7 +17,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
-import android.location.Location as AndroidLocation
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
@@ -37,6 +36,7 @@ import io.element.android.libraries.ui.strings.CommonStrings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import android.location.Location as AndroidLocation
 
 private const val NOTIFICATION_ID = 4242
 private const val NOTIFICATION_CHANNEL_ID = "live_location_sharing"
