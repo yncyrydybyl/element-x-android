@@ -300,6 +300,7 @@ class ThreadedMessagesNode(
                     onViewAllPinnedMessagesClick = {},
                     modifier = modifier,
                     knockRequestsBannerView = {},
+                    liveLocationSharingBannerView = {},
                 )
 
                 roomMemberModerationRenderer.Render(
