@@ -29,7 +29,7 @@ jobs:
       fail-fast: false
     # Allow all jobs on develop. Just one per PR.
     concurrency:
-      group: ${{ github.ref == 'refs/heads/develop' && format('build-develop-{0}-{1}', matrix.variant, github.sha) || format('build-{0}-{1}', matrix.variant, github.ref)  }}
+      group: ${{ github.ref == 'refs/heads/develop' && format('build-develop-{0}-{1}', matrix.variant, github.sha) || format('build-{0}-{1}', matrix.variant, github.head_ref || github.ref_name) }}
       cancel-in-progress: true
     steps:
       - name: Free Disk Space (Ubuntu)
