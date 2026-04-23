@@ -106,6 +106,24 @@ appId: io.element.android.x.debug
 - tapOn:
     text: "Skip"
     optional: true
+# "No distributors available" notification error (always on emulators).
+- runFlow:
+    when:
+      visible:
+        text: "No distributors available"
+    commands:
+      - tapOn:
+          text: "Do not show this again"
+          optional: true
+      - tapOn:
+          text: "OK"
+          optional: true
+      - tapOn:
+          text: "Dismiss"
+          optional: true
+- tapOn:
+    text: "OK"
+    optional: true
 
 # Room list: open the shared room.
 - extendedWaitUntil:
