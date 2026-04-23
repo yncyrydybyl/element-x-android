@@ -11,9 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.zacsweers.metro.ContributesBinding
 import io.element.android.features.location.api.live.LiveLocationSharingBannerRenderer
+import io.element.android.libraries.architecture.coverage.ExcludeFromCoverage
 import io.element.android.libraries.di.RoomScope
 
 @ContributesBinding(RoomScope::class)
+@ExcludeFromCoverage
 class DefaultLiveLocationSharingBannerRenderer(
     private val presenter: LiveLocationSharingBannerPresenter,
 ) : LiveLocationSharingBannerRenderer {

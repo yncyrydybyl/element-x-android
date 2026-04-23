@@ -28,6 +28,7 @@ import dev.zacsweers.metro.Inject
 import io.element.android.features.location.api.Location
 import io.element.android.features.location.impl.R
 import io.element.android.libraries.architecture.bindings
+import io.element.android.libraries.architecture.coverage.ExcludeFromCoverage
 import io.element.android.libraries.core.extensions.runCatchingExceptions
 import io.element.android.libraries.designsystem.utils.CommonDrawables
 import io.element.android.libraries.di.annotations.AppCoroutineScope
@@ -44,6 +45,7 @@ private const val ACTION_STOP = "io.element.android.features.location.impl.live.
 private const val MIN_UPDATE_INTERVAL_MS = 3_000L
 private const val MIN_UPDATE_DISTANCE_M = 10f
 
+@ExcludeFromCoverage
 class LiveLocationShareService : Service() {
     @Inject lateinit var manager: LiveLocationShareManager
     @Inject lateinit var matrixClientProvider: MatrixClientProvider

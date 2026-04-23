@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.SingleIn
+import io.element.android.libraries.architecture.coverage.ExcludeFromCoverage
 import io.element.android.libraries.core.extensions.runCatchingExceptions
 import io.element.android.libraries.di.annotations.AppCoroutineScope
 import io.element.android.libraries.di.annotations.ApplicationContext
@@ -32,6 +33,7 @@ import kotlin.time.Duration
 
 @SingleIn(AppScope::class)
 @ContributesBinding(AppScope::class)
+@ExcludeFromCoverage
 class DefaultLiveLocationShareManager(
     @ApplicationContext private val context: Context,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
