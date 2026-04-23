@@ -10,50 +10,98 @@ appId: io.element.android.x.debug
 ---
 - launchApp:
     clearState: true
-# Onboarding — pick "I already have an account".
+
+# Welcome screen ("Be in your element") → tap the manual sign-in button.
+- extendedWaitUntil:
+    visible:
+      text: "Be in your element"
+    timeout: 30000
+
 - tapOn:
-    text: "I already have an account"
+    text: "Sign in manually"
     optional: true
 - tapOn:
     text: "Continue"
     optional: true
-# Server selector: enter custom homeserver.
 - tapOn:
-    text: "Edit"
+    text: "Sign in to .*"
     optional: true
+
+# Confirm account provider screen — choose "Change account provider".
+- tapOn:
+    text: "Change account provider"
+    optional: true
+- tapOn:
+    text: "Other"
+    optional: true
+
+# Select your server screen — enter custom homeserver URL.
+- extendedWaitUntil:
+    visible:
+      text: "Select your server"
+    timeout: 15000
+- tapOn:
+    text: "Homeserver URL"
+- eraseText
 - inputText: ${MAESTRO_HOMESERVER_URL}
 - tapOn:
     text: "Continue"
+
+# Account provider confirmation (if shown).
+- tapOn:
+    text: "Continue"
+    optional: true
+
+# Login form: "Welcome back!" / "Enter your details".
 - extendedWaitUntil:
     visible:
       text: "Enter your details"
-    timeout: 15000
+    timeout: 30000
 - tapOn:
-    id: "login_username"
+    text: "Username"
 - inputText: ${MAESTRO_USER}
 - tapOn:
-    id: "login_password"
+    text: "Password"
 - inputText: ${MAESTRO_PASSWORD}
 - tapOn:
     text: "Continue"
-# Skip analytics, session verification if shown.
+
+# Skip analytics / session verification / encryption prompts.
 - tapOn:
     text: "Not now"
     optional: true
 - tapOn:
     text: "Later"
     optional: true
+- tapOn:
+    text: "I'll do it later"
+    optional: true
+- tapOn:
+    text: "Skip"
+    optional: true
+
+# Room list: open the shared room.
 - extendedWaitUntil:
     visible:
       text: ${MAESTRO_ROOM_NAME}
-    timeout: 60000
+    timeout: 90000
 - tapOn:
     text: ${MAESTRO_ROOM_NAME}
-# In-room: tap location pin in top app bar (added in d81ee6945).
+
+# Location pin in the top app bar opens Share Location directly.
 - tapOn:
     text: "Share live location"
     optional: true
-# Accept Android runtime permission dialog.
+
+# If we landed in the attachment sheet instead, pick Share Location.
+- tapOn:
+    text: "Share location"
+    optional: true
+- tapOn:
+    text: "Share live location"
+    optional: true
+
+# Accept Android runtime permission dialog (if it appears on top).
 - runFlow:
     when:
       visible:
@@ -66,17 +114,15 @@ appId: io.element.android.x.debug
         text: "Allow"
     commands:
       - tapOn: "Allow"
-# "Share live location" row if we went through the attachment path.
-- tapOn:
-    text: "Share live location"
-    optional: true
-# Privacy disclaimer.
+
+# Privacy disclaimer ("Share your live location?" → Continue).
 - extendedWaitUntil:
     visible:
       text: "Share your live location?"
-    timeout: 15000
+    timeout: 20000
 - tapOn:
     text: "Continue"
+
 # Duration picker — pick the shortest.
 - extendedWaitUntil:
     visible:
@@ -86,8 +132,9 @@ appId: io.element.android.x.debug
     text: "15 minutes"
 - tapOn:
     text: "Continue"
-# Confirm the banner appeared.
+
+# Confirm the banner appeared so we know sharing is active.
 - extendedWaitUntil:
     visible:
       text: "You are sharing your live location"
-    timeout: 30000
+    timeout: 60000
