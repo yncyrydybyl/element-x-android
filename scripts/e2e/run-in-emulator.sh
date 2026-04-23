@@ -27,6 +27,16 @@ on_exit() {
   local rc=${1:-?}
   echo "=== on_exit (rc=$rc) artifacts dir ==="
   ls -la "$ARTIFACTS/" || true
+  echo "=== Synapse /_matrix/client/versions ==="
+  curl -sS http://localhost:8008/_matrix/client/versions 2>&1 | tee "$ARTIFACTS/synapse-versions.json" || true
+  echo "=== Synapse /.well-known/matrix/client ==="
+  curl -sS http://localhost:8008/.well-known/matrix/client 2>&1 | tee "$ARTIFACTS/wellknown.json" || true
+  echo "=== emulator view reach to synapse ==="
+  adb shell curl -sS http://10.0.2.2:8008/_matrix/client/versions 2>&1 | tee "$ARTIFACTS/emulator-synapse.txt" || true
+  echo "=== UI hierarchy (last known) ==="
+  adb shell uiautomator dump /sdcard/ui.xml 2>&1 || true
+  adb exec-out cat /sdcard/ui.xml > "$ARTIFACTS/ui.xml" 2>/dev/null || true
+  head -c 4000 "$ARTIFACTS/ui.xml" 2>/dev/null || echo "(no ui.xml)"
   echo "=== verifier.log ==="
   cat "$ARTIFACTS/verifier.log" 2>/dev/null || echo "(no verifier.log)"
   echo "=== maestro.log (tail 200) ==="
@@ -36,6 +46,9 @@ on_exit() {
   emit_annotation warning "maestro.log" "$ARTIFACTS/maestro.log"
   emit_annotation warning "verifier.log" "$ARTIFACTS/verifier.log"
   emit_annotation warning "logcat" "$ARTIFACTS/logcat.txt"
+  emit_annotation notice "synapse-versions" "$ARTIFACTS/synapse-versions.json"
+  emit_annotation notice "emulator->synapse" "$ARTIFACTS/emulator-synapse.txt"
+  emit_annotation notice "ui.xml (head)" "$ARTIFACTS/ui.xml"
   echo "::notice title=e2e trap::exit=$rc maestro_rc=${MAESTRO_RC:-?} verifier_rc=${VERIFIER_RC:-?}"
 }
 trap 'on_exit $?' EXIT
