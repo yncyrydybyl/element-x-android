@@ -79,10 +79,11 @@ jobs:
       - name: Assemble debug APK (gplay)
         run: ./gradlew :app:assembleGplayDebug $CI_GRADLE_ARG_PROPERTIES
 
-      - name: Install Maestro
+      - name: Install Maestro (pre-step, cache purposes)
         run: |
           curl -Ls "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+          "$HOME/.maestro/bin/maestro" --version || true
 
       - name: Install Python deps (verifier)
         run: |
@@ -104,14 +105,18 @@ jobs:
           profile: pixel_6
           script: |
             set -ux
+            # Re-install Maestro inside this step so it's definitely on PATH,
+            # regardless of whether $GITHUB_PATH propagated here.
+            if ! command -v maestro >/dev/null 2>&1 && [ ! -x "$HOME/.maestro/bin/maestro" ]; then
+              curl -Ls "https://get.maestro.mobile.dev" | bash
+            fi
+            export PATH="$HOME/.maestro/bin:$PATH"
+
             echo "=== environment ==="
             echo "pwd=$(pwd)"
             echo "PATH=$PATH"
             echo "HOME=$HOME"
             which adb || true
-            which maestro || true
-            ls -la "$HOME/.maestro/bin" 2>/dev/null || true
-            export PATH="$HOME/.maestro/bin:$PATH"
             which maestro || true
 
             mkdir -p e2e-artifacts
@@ -174,6 +179,22 @@ jobs:
             echo "=== summary ==="
             echo "maestro rc=$MAESTRO_RC"
             echo "verifier rc=$VERIFIER_RC"
+
+            # Emit diagnostics as annotations (visible without auth via
+            # the check-runs annotations API).
+            emit_annotation() {
+              local level=$1; local title=$2; local path=$3
+              if [ -s "$path" ]; then
+                # Annotation message limit ~65535 chars; keep the last 4000 to be safe.
+                local msg
+                msg=$(tail -c 4000 "$path" | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g')
+                echo "::${level} title=${title}::${msg}"
+              fi
+            }
+            emit_annotation warning "maestro.log (tail)" e2e-artifacts/maestro.log
+            emit_annotation warning "verifier.log" e2e-artifacts/verifier.log
+            emit_annotation warning "logcat (tail)" e2e-artifacts/logcat.txt
+            echo "::notice title=e2e summary::maestro_rc=$MAESTRO_RC verifier_rc=$VERIFIER_RC"
 
             test "$MAESTRO_RC" = 0 && test "$VERIFIER_RC" = 0
 
