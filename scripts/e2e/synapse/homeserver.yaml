@@ -1,0 +1,43 @@
+# Minimal Synapse config for E2E live-location tests.
+server_name: "e2e.local"
+pid_file: /data/homeserver.pid
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    bind_addresses: ['0.0.0.0']
+    resources:
+      - names: [client, federation, admin]
+        compress: false
+
+database:
+  name: sqlite3
+  args:
+    database: /data/homeserver.db
+
+log_config: "/data/log.config"
+media_store_path: /data/media_store
+registration_shared_secret: "e2eregistration"
+report_stats: false
+enable_registration: true
+enable_registration_without_verification: true
+enable_registration_captcha: false
+macaroon_secret_key: "e2emacaroon"
+form_secret: "e2eform"
+signing_key_path: "/data/signing.key"
+trusted_key_servers: []
+rc_registration:
+  per_second: 1000
+  burst_count: 1000
+rc_message:
+  per_second: 1000
+  burst_count: 1000
+rc_login:
+  address:
+    per_second: 1000
+    burst_count: 1000
+  account:
+    per_second: 1000
+    burst_count: 1000
+# Disable well-known delegation / OIDC so Element X falls back to password login.

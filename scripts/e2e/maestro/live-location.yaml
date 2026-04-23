@@ -1,0 +1,96 @@
+# Maestro flow: drive Element X through the live-location sharing flow
+# against a local Synapse homeserver.
+#
+# Required env vars (exported by setup-synapse.sh + workflow):
+#   MAESTRO_HOMESERVER_URL   e.g. http://10.0.2.2:8008
+#   MAESTRO_USER             e.g. sender
+#   MAESTRO_PASSWORD         e.g. senderpass123
+#   MAESTRO_ROOM_NAME        e.g. e2e
+appId: io.element.android.x.debug
+---
+- launchApp:
+    clearState: true
+# Onboarding — pick "I already have an account".
+- tapOn:
+    text: "I already have an account"
+    optional: true
+- tapOn:
+    text: "Continue"
+    optional: true
+# Server selector: enter custom homeserver.
+- tapOn:
+    text: "Edit"
+    optional: true
+- inputText: ${MAESTRO_HOMESERVER_URL}
+- tapOn:
+    text: "Continue"
+- extendedWaitUntil:
+    visible:
+      text: "Enter your details"
+    timeout: 15000
+- tapOn:
+    id: "login_username"
+- inputText: ${MAESTRO_USER}
+- tapOn:
+    id: "login_password"
+- inputText: ${MAESTRO_PASSWORD}
+- tapOn:
+    text: "Continue"
+# Skip analytics, session verification if shown.
+- tapOn:
+    text: "Not now"
+    optional: true
+- tapOn:
+    text: "Later"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      text: ${MAESTRO_ROOM_NAME}
+    timeout: 60000
+- tapOn:
+    text: ${MAESTRO_ROOM_NAME}
+# In-room: tap location pin in top app bar (added in d81ee6945).
+- tapOn:
+    id: "action_share_live_location"
+    optional: true
+- tapOn:
+    contentDescription: "Share live location"
+    optional: true
+# Accept Android runtime permission dialog.
+- runFlow:
+    when:
+      visible:
+        text: "While using the app"
+    commands:
+      - tapOn: "While using the app"
+- runFlow:
+    when:
+      visible:
+        text: "Allow"
+    commands:
+      - tapOn: "Allow"
+# "Share live location" row if we went through the attachment path.
+- tapOn:
+    text: "Share live location"
+    optional: true
+# Privacy disclaimer.
+- extendedWaitUntil:
+    visible:
+      text: "Share your live location?"
+    timeout: 15000
+- tapOn:
+    text: "Continue"
+# Duration picker — pick the shortest.
+- extendedWaitUntil:
+    visible:
+      text: "15 minutes"
+    timeout: 15000
+- tapOn:
+    text: "15 minutes"
+- tapOn:
+    text: "Continue"
+# Confirm the banner appeared.
+- extendedWaitUntil:
+    visible:
+      text: "You are sharing your live location"
+    timeout: 30000
