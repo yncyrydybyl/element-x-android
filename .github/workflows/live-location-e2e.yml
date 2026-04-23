@@ -37,11 +37,13 @@ jobs:
           sudo mkdir -p /srv/synapse-data
           sudo chown -R 991:991 /srv/synapse-data || true
           docker rm -f synapse_e2e >/dev/null 2>&1 || true
-          # server_name must match the hostname:port Element X uses for a URL
-          # with a non-default port (Matrix spec).
+          # Plain hostname for server_name. Element X's post-login flow
+          # cares about homeserver URL reachability more than server_name
+          # matching the URL — the Matrix /login endpoint uses localpart
+          # only and server_name is appended server-side.
           docker run --rm \
             -v /srv/synapse-data:/data \
-            -e SYNAPSE_SERVER_NAME="10.0.2.2:8008" \
+            -e SYNAPSE_SERVER_NAME=e2e.local \
             -e SYNAPSE_REPORT_STATS=no \
             "$SYNAPSE_IMAGE" generate
           # Append our open-registration overrides to the generated config.
