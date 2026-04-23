@@ -42,17 +42,27 @@ appId: io.element.android.x.debug
 - tapOn:
     text: "Other"
     optional: true
-- tapOn:
-    text: "Continue"
-    optional: true
 
-# Select your server screen — enter custom homeserver URL.
+# Search Account Provider / Select your server screen — enter custom URL.
+# Title variants: "Find an account provider" (SearchAccountProviderView)
+# or "Select your server" (ChangeServerView).
+- extendedWaitUntil:
+    visible:
+      text: "Find an account provider"
+    timeout: 20000
+    optional: true
 - extendedWaitUntil:
     visible:
       text: "Select your server"
-    timeout: 15000
+    timeout: 5000
+    optional: true
+
+- tapOn:
+    text: "Homeserver address"
+    optional: true
 - tapOn:
     text: "Homeserver URL"
+    optional: true
 - eraseText
 - inputText: ${MAESTRO_HOMESERVER_URL}
 - tapOn:
