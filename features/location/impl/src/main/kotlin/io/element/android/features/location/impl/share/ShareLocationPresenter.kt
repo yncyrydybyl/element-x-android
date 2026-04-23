@@ -122,7 +122,7 @@ class ShareLocationPresenter(
                 }
                 is ShareLocationEvent.StartLiveLocationShare -> scope.launch {
                     dialogState = ShareLocationState.Dialog.None
-                    // room.startLiveLocationShare(event.duration.inWholeMilliseconds)
+                    room.startLiveLocationShare(event.duration.inWholeMilliseconds)
                 }
                 ShareLocationEvent.RequestPermissions -> {
                     dialogState = ShareLocationState.Dialog.None
