@@ -43,7 +43,13 @@ on_exit() {
   tail -n 200 "$ARTIFACTS/maestro.log" 2>/dev/null || echo "(no maestro.log)"
   echo "=== logcat (tail 100) ==="
   tail -n 100 "$ARTIFACTS/logcat.txt" 2>/dev/null || echo "(no logcat.txt)"
+  # Filter logcat for signals related to live-location sharing so I can
+  # see why the verifier didn't get any beacon.
+  echo "=== logcat: live-location / beacon / foreground service signals ==="
+  grep -iE "LiveLocation|beacon|startLiveLocation|sendLiveLocation|ForegroundService|location.impl|LocationManager|ACCESS_FINE_LOCATION|room.send|startForeground" \
+    "$ARTIFACTS/logcat.txt" 2>/dev/null | tail -n 200 | tee "$ARTIFACTS/logcat-live.txt" || echo "(no logcat.txt)"
   emit_annotation warning "maestro.log" "$ARTIFACTS/maestro.log"
+  emit_annotation warning "logcat-live" "$ARTIFACTS/logcat-live.txt"
   emit_annotation warning "verifier.log" "$ARTIFACTS/verifier.log"
   emit_annotation warning "logcat" "$ARTIFACTS/logcat.txt"
   emit_annotation notice "synapse-versions" "$ARTIFACTS/synapse-versions.json"
@@ -102,11 +108,11 @@ maestro test \
 MAESTRO_RC=${PIPESTATUS[0]}
 echo "maestro exited with rc=$MAESTRO_RC"
 
-for i in 1 2 3 4; do
+for i in 1 2 3 4 5 6 7 8 9 10; do
   lon=$(awk "BEGIN { printf \"%.4f\", 13.4050 + 0.001 * $i }")
   lat=$(awk "BEGIN { printf \"%.4f\", 52.5200 + 0.001 * $i }")
   adb emu geo fix "$lon" "$lat" || true
-  sleep 4
+  sleep 3
 done
 
 VERIFIER_RC=0
