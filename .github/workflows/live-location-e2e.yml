@@ -2,6 +2,12 @@ name: Live location E2E
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - 'claude/**'
+    paths:
+      - '.github/workflows/live-location-e2e.yml'
+      - 'scripts/e2e/**'
 
 permissions:
   contents: read
