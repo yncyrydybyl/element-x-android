@@ -84,13 +84,14 @@ appId: io.element.android.x.debug
       text: "Enter your details"
     timeout: 30000
 - tapOn:
-    text: "Username"
+    id: "login-email_username"
 - inputText: ${MAESTRO_USER}
 - tapOn:
-    text: "Password"
+    id: "login-password"
 - inputText: ${MAESTRO_PASSWORD}
+- hideKeyboard
 - tapOn:
-    text: "Continue"
+    id: "login-continue"
 
 # Skip analytics / session verification / encryption prompts.
 - tapOn:
