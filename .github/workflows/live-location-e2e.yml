@@ -103,27 +103,37 @@ jobs:
           arch: x86_64
           profile: pixel_6
           script: |
-            # Tolerate individual command failures — we gate success on explicit RC checks.
             set -ux
-            mkdir -p e2e-artifacts
-            ls -la e2e-artifacts || true
-            pwd
+            echo "=== environment ==="
+            echo "pwd=$(pwd)"
+            echo "PATH=$PATH"
+            echo "HOME=$HOME"
+            which adb || true
+            which maestro || true
+            ls -la "$HOME/.maestro/bin" 2>/dev/null || true
+            export PATH="$HOME/.maestro/bin:$PATH"
+            which maestro || true
 
-            # Stream logcat to a file so we can diagnose crashes / permissions.
+            mkdir -p e2e-artifacts
+
+            echo "=== APKs produced ==="
+            ls -la app/build/outputs/apk/gplay/debug/ || true
+
             adb logcat -c || true
             adb logcat -v time > e2e-artifacts/logcat.txt 2>&1 &
             LOGCAT_PID=$!
 
-            # Install whichever ABI the emulator accepts (x86_64 on most runners).
+            echo "=== APK install ==="
             adb install app/build/outputs/apk/gplay/debug/app-gplay-x86_64-debug.apk \
               || adb install app/build/outputs/apk/gplay/debug/app-gplay-arm64-v8a-debug.apk \
               || adb install app/build/outputs/apk/gplay/debug/app-gplay-universal-debug.apk \
-              || echo "APK install FAILED" | tee -a e2e-artifacts/summary.txt
+              || echo "APK install FAILED"
 
             adb shell pm grant io.element.android.x.debug android.permission.ACCESS_FINE_LOCATION || true
             adb shell pm grant io.element.android.x.debug android.permission.ACCESS_COARSE_LOCATION || true
             adb emu geo fix 13.4050 52.5200 || true
 
+            echo "=== starting verifier in background ==="
             HS_URL=http://localhost:8008 \
               python3 scripts/e2e/verify_beacon.py > e2e-artifacts/verifier.log 2>&1 &
             VERIFIER_PID=$!
@@ -132,17 +142,18 @@ jobs:
             export MAESTRO_USER="${E2E_SENDER_USER:-}"
             export MAESTRO_PASSWORD="${E2E_SENDER_PASS:-}"
             export MAESTRO_ROOM_NAME="e2e"
-            echo "MAESTRO_HOMESERVER_URL=$MAESTRO_HOMESERVER_URL" >> e2e-artifacts/env.txt
-            echo "MAESTRO_USER=$MAESTRO_USER" >> e2e-artifacts/env.txt
-            echo "MAESTRO_ROOM_NAME=$MAESTRO_ROOM_NAME" >> e2e-artifacts/env.txt
 
-            maestro --verbose test \
+            echo "=== maestro version ==="
+            maestro --version || echo "maestro not runnable"
+
+            echo "=== running maestro ==="
+            maestro test \
               --debug-output e2e-artifacts/maestro \
               scripts/e2e/maestro/live-location.yaml \
-              > e2e-artifacts/maestro.log 2>&1
-            MAESTRO_RC=$?
+              2>&1 | tee e2e-artifacts/maestro.log
+            MAESTRO_RC=${PIPESTATUS[0]}
+            echo "maestro exited with rc=$MAESTRO_RC"
 
-            # Nudge GPS regardless of maestro rc so partial shares still see beacons.
             for i in 1 2 3 4; do
               lon=$(awk "BEGIN { printf \"%.4f\", 13.4050 + 0.001 * $i }")
               lat=$(awk "BEGIN { printf \"%.4f\", 52.5200 + 0.001 * $i }")
@@ -153,17 +164,16 @@ jobs:
             VERIFIER_RC=0
             wait "$VERIFIER_PID" || VERIFIER_RC=$?
 
-            adb exec-out screencap -p > e2e-artifacts/final-screen.png || true
+            adb exec-out screencap -p > e2e-artifacts/final-screen.png 2>/dev/null || true
             kill "$LOGCAT_PID" 2>/dev/null || true
 
-            {
-              echo "=== env ==="; cat e2e-artifacts/env.txt
-              echo "=== maestro.log (last 200) ==="; tail -n 200 e2e-artifacts/maestro.log
-              echo "=== verifier.log ==="; cat e2e-artifacts/verifier.log
-              echo "=== summary ==="
-              echo "maestro rc=$MAESTRO_RC"
-              echo "verifier rc=$VERIFIER_RC"
-            } | tee -a e2e-artifacts/summary.txt
+            echo "=== verifier.log ==="
+            cat e2e-artifacts/verifier.log || true
+            echo "=== logcat (tail 100) ==="
+            tail -n 100 e2e-artifacts/logcat.txt || true
+            echo "=== summary ==="
+            echo "maestro rc=$MAESTRO_RC"
+            echo "verifier rc=$VERIFIER_RC"
 
             test "$MAESTRO_RC" = 0 && test "$VERIFIER_RC" = 0
 
