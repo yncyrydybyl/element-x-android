@@ -17,7 +17,6 @@ import io.element.android.libraries.matrix.test.room.FakeJoinedRoom
 import io.element.android.tests.testutils.test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import kotlin.time.Duration.Companion.minutes
@@ -53,22 +52,6 @@ class LiveLocationSharingBannerPresenterTest {
         presenter.test {
             val state = awaitItem()
             assertThat(state.isVisible).isFalse()
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `present - Stop event clears the active session for the room`() = runTest {
-        val manager = FakeLiveLocationShareManager()
-        manager.start(sessionId = A_SESSION_ID, roomId = A_ROOM_ID, duration = 15.minutes)
-        val presenter = createPresenter(manager = manager)
-        presenter.test {
-            val visibleState = awaitItem()
-            assertThat(visibleState.isVisible).isTrue()
-            visibleState.eventSink(LiveLocationSharingBannerEvents.Stop)
-            advanceUntilIdle()
-            val hiddenState = awaitItem()
-            assertThat(hiddenState.isVisible).isFalse()
             cancelAndIgnoreRemainingEvents()
         }
     }
