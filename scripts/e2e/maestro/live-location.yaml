@@ -51,10 +51,7 @@ appId: io.element.android.x.debug
     text: ${MAESTRO_ROOM_NAME}
 # In-room: tap location pin in top app bar (added in d81ee6945).
 - tapOn:
-    id: "action_share_live_location"
-    optional: true
-- tapOn:
-    contentDescription: "Share live location"
+    text: "Share live location"
     optional: true
 # Accept Android runtime permission dialog.
 - runFlow:
