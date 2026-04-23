@@ -29,6 +29,7 @@ import io.element.android.features.location.impl.common.permissions.PermissionsE
 import io.element.android.features.location.impl.common.permissions.PermissionsPresenter
 import io.element.android.features.location.impl.common.permissions.PermissionsState
 import io.element.android.features.location.impl.common.toDialogState
+import io.element.android.features.location.impl.live.LiveLocationShareManager
 import io.element.android.features.location.impl.share.ShareLocationState.Dialog.Constraints
 import io.element.android.features.messages.api.MessageComposerContext
 import io.element.android.libraries.architecture.Presenter
@@ -63,6 +64,7 @@ class ShareLocationPresenter(
     private val featureFlagService: FeatureFlagService,
     private val client: MatrixClient,
     private val durationFormatter: DurationFormatter,
+    private val liveLocationShareManager: LiveLocationShareManager,
 ) : Presenter<ShareLocationState> {
     @AssistedFactory
     fun interface Factory {
@@ -122,7 +124,11 @@ class ShareLocationPresenter(
                 }
                 is ShareLocationEvent.StartLiveLocationShare -> scope.launch {
                     dialogState = ShareLocationState.Dialog.None
-                    room.startLiveLocationShare(event.duration.inWholeMilliseconds)
+                    liveLocationShareManager.start(
+                        sessionId = client.sessionId,
+                        roomId = room.roomId,
+                        duration = event.duration,
+                    )
                 }
                 ShareLocationEvent.RequestPermissions -> {
                     dialogState = ShareLocationState.Dialog.None

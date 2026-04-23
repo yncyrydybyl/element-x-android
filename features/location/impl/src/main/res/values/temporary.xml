@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen_live_location_notification_title">Sharing live location</string>
+    <string name="screen_live_location_notification_text">Your location is being shared with this room.</string>
+    <string name="screen_live_location_notification_channel_name">Live location sharing</string>
+</resources>
