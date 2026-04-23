@@ -23,8 +23,6 @@ import androidx.compose.ui.unit.dp
 import io.element.android.compound.theme.ElementTheme
 import io.element.android.compound.tokens.generated.CompoundIcons
 import io.element.android.features.location.impl.R
-import io.element.android.libraries.designsystem.preview.ElementPreview
-import io.element.android.libraries.designsystem.preview.PreviewsDayNight
 import io.element.android.libraries.designsystem.theme.components.ButtonSize
 import io.element.android.libraries.designsystem.theme.components.Icon
 import io.element.android.libraries.designsystem.theme.components.OutlinedButton
@@ -74,15 +72,4 @@ fun LiveLocationSharingBannerView(
             }
         }
     }
-}
-
-@PreviewsDayNight
-@Composable
-internal fun LiveLocationSharingBannerViewPreview() = ElementPreview {
-    LiveLocationSharingBannerView(
-        state = LiveLocationSharingBannerState(
-            isVisible = true,
-            eventSink = {},
-        ),
-    )
 }

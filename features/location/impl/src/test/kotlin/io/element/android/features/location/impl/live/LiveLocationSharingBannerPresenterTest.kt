@@ -29,6 +29,7 @@ class LiveLocationSharingBannerPresenterTest {
         presenter.test {
             val state = awaitItem()
             assertThat(state.isVisible).isFalse()
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -40,6 +41,7 @@ class LiveLocationSharingBannerPresenterTest {
         presenter.test {
             val state = awaitItem()
             assertThat(state.isVisible).isTrue()
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -51,6 +53,7 @@ class LiveLocationSharingBannerPresenterTest {
         presenter.test {
             val state = awaitItem()
             assertThat(state.isVisible).isFalse()
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -66,7 +69,22 @@ class LiveLocationSharingBannerPresenterTest {
             advanceUntilIdle()
             val hiddenState = awaitItem()
             assertThat(hiddenState.isVisible).isFalse()
+            cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun `LiveLocationSharingBannerState equality and copy`() {
+        val sink: (LiveLocationSharingBannerEvents) -> Unit = {}
+        val a = LiveLocationSharingBannerState(isVisible = true, eventSink = sink)
+        val b = LiveLocationSharingBannerState(isVisible = true, eventSink = sink)
+        val c = a.copy(isVisible = false)
+
+        assertThat(a).isEqualTo(b)
+        assertThat(a.hashCode()).isEqualTo(b.hashCode())
+        assertThat(c.isVisible).isFalse()
+        assertThat(a.toString()).contains("isVisible")
+        assertThat(LiveLocationSharingBannerEvents.Stop).isEqualTo(LiveLocationSharingBannerEvents.Stop)
     }
 
     private fun TestScope.createPresenter(
