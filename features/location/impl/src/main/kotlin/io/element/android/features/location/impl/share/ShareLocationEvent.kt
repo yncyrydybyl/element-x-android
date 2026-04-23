@@ -18,6 +18,7 @@ sealed interface ShareLocationEvent {
     ) : ShareLocationEvent
 
     data object ShowLiveLocationDurationPicker : ShareLocationEvent
+    data object AcknowledgeLiveLocationDisclaimer : ShareLocationEvent
     data class StartLiveLocationShare(val duration: Duration) : ShareLocationEvent
 
     data object StartTrackingUserLocation : ShareLocationEvent

@@ -298,7 +298,7 @@ class ShareLocationPresenterTest {
     }
 
     @Test
-    fun `ShowLiveLocationDurationPicker shows duration dialog when constraints pass`() = runTest {
+    fun `ShowLiveLocationDurationPicker shows disclaimer then duration dialog when constraints pass`() = runTest {
         val shareLocationPresenter = createShareLocationPresenter()
         fakePermissionsPresenter.givenState(
             aPermissionsState(
@@ -311,8 +311,11 @@ class ShareLocationPresenterTest {
             skipItems(1)
             val initialState = awaitItem()
             initialState.eventSink(ShareLocationEvent.ShowLiveLocationDurationPicker)
-            val durationDialogState = awaitItem()
+            val disclaimerState = awaitItem()
+            assertThat(disclaimerState.dialogState).isEqualTo(ShareLocationState.Dialog.LiveLocationDisclaimer)
 
+            disclaimerState.eventSink(ShareLocationEvent.AcknowledgeLiveLocationDisclaimer)
+            val durationDialogState = awaitItem()
             assertThat(durationDialogState.dialogState).isInstanceOf(ShareLocationState.Dialog.LiveLocationDurations::class.java)
             cancelAndIgnoreRemainingEvents()
         }

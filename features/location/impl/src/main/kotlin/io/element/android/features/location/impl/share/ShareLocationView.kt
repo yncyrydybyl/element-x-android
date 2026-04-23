@@ -47,6 +47,7 @@ import io.element.android.libraries.designsystem.components.LocationPin
 import io.element.android.libraries.designsystem.components.PinVariant
 import io.element.android.libraries.designsystem.components.avatar.AvatarSize
 import io.element.android.libraries.designsystem.components.button.BackButton
+import io.element.android.libraries.designsystem.components.dialogs.ConfirmationDialog
 import io.element.android.libraries.designsystem.components.dialogs.ListDialog
 import io.element.android.libraries.designsystem.components.list.ListItemContent
 import io.element.android.libraries.designsystem.components.list.RadioButtonListItem
@@ -88,6 +89,13 @@ fun ShareLocationView(
                 state.eventSink(ShareLocationEvent.StartLiveLocationShare(duration))
                 navigateUp()
             },
+            onDismiss = { state.eventSink(ShareLocationEvent.DismissDialog) },
+        )
+        ShareLocationState.Dialog.LiveLocationDisclaimer -> ConfirmationDialog(
+            title = stringResource(R.string.screen_live_location_disclaimer_title),
+            content = stringResource(R.string.screen_live_location_disclaimer_message),
+            submitText = stringResource(CommonStrings.action_continue),
+            onSubmitClick = { state.eventSink(ShareLocationEvent.AcknowledgeLiveLocationDisclaimer) },
             onDismiss = { state.eventSink(ShareLocationEvent.DismissDialog) },
         )
     }

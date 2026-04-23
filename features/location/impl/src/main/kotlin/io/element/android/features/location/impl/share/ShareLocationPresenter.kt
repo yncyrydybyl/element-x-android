@@ -86,6 +86,7 @@ class ShareLocationPresenter(
         }
         val currentUser by client.userProfile.collectAsState()
         val scope = rememberCoroutineScope()
+        var liveLocationDisclaimerAcknowledged by remember { mutableStateOf(false) }
 
         fun checkLocationConstraints() {
             val locationConstraints = checkLocationConstraints(permissionsState, locationActions)
@@ -94,6 +95,13 @@ class ShareLocationPresenter(
         }
 
         LaunchedEffect(permissionsState.permissions) { checkLocationConstraints() }
+
+        fun showLiveLocationDurationPicker() {
+            val durations = LIVE_LOCATION_DURATIONS.map {
+                LiveLocationDuration(duration = it, formatted = durationFormatter.format(it))
+            }
+            dialogState = ShareLocationState.Dialog.LiveLocationDurations(durations.toImmutableList())
+        }
 
         fun handleEvent(event: ShareLocationEvent) {
             when (event) {
@@ -113,14 +121,17 @@ class ShareLocationPresenter(
                 }
                 ShareLocationEvent.ShowLiveLocationDurationPicker -> {
                     val constraintsResult = checkLocationConstraints(permissionsState, locationActions)
-                    dialogState = if (constraintsResult is LocationConstraintsCheck.Success) {
-                        val durations = LIVE_LOCATION_DURATIONS.map {
-                            LiveLocationDuration(duration = it, formatted = durationFormatter.format(it))
-                        }
-                        ShareLocationState.Dialog.LiveLocationDurations(durations.toImmutableList())
+                    if (constraintsResult !is LocationConstraintsCheck.Success) {
+                        dialogState = Constraints(constraintsResult.toDialogState())
+                    } else if (!liveLocationDisclaimerAcknowledged) {
+                        dialogState = ShareLocationState.Dialog.LiveLocationDisclaimer
                     } else {
-                        Constraints(constraintsResult.toDialogState())
+                        showLiveLocationDurationPicker()
                     }
+                }
+                ShareLocationEvent.AcknowledgeLiveLocationDisclaimer -> {
+                    liveLocationDisclaimerAcknowledged = true
+                    showLiveLocationDurationPicker()
                 }
                 is ShareLocationEvent.StartLiveLocationShare -> scope.launch {
                     dialogState = ShareLocationState.Dialog.None
