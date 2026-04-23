@@ -10,12 +10,14 @@ package io.element.android.features.location.impl
 
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
-import io.element.android.features.location.api.BuildConfig
 import io.element.android.features.location.api.LocationService
 
 @ContributesBinding(AppScope::class)
 class DefaultLocationService : LocationService {
     override fun isServiceAvailable(): Boolean {
-        return BuildConfig.MAPTILER_API_KEY.isNotEmpty()
+        // Forced to true to let the location menu item appear on forks that
+        // have no MapTiler API key. Maps will not render but the share-location
+        // flow (including live location) is still functional.
+        return true
     }
 }
