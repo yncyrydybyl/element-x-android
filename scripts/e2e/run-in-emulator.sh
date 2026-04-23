@@ -2,10 +2,6 @@
 # Runs inside the reactivecircus/android-emulator-runner script block.
 # Drives the Android emulator through the live-location sharing flow and
 # asserts that a headless matrix-nio receiver sees the expected beacons.
-#
-# All diagnostic output goes to stdout (visible on the CI run page) AND
-# to workflow annotations (readable via the unauthenticated check-runs
-# annotations API).
 set +e
 set -x
 
@@ -29,10 +25,57 @@ on_exit() {
   ls -la "$ARTIFACTS/" || true
   echo "=== Synapse /_matrix/client/versions ==="
   curl -sS http://localhost:8008/_matrix/client/versions 2>&1 | tee "$ARTIFACTS/synapse-versions.json" || true
-  echo "=== Synapse /.well-known/matrix/client ==="
-  curl -sS http://localhost:8008/.well-known/matrix/client 2>&1 | tee "$ARTIFACTS/wellknown.json" || true
-  echo "=== emulator view reach to synapse ==="
-  adb shell curl -sS http://10.0.2.2:8008/_matrix/client/versions 2>&1 | tee "$ARTIFACTS/emulator-synapse.txt" || true
+
+  echo "=== Room state (did sender publish any beacon events?) ==="
+  if [ -n "${E2E_SENDER_TOKEN:-}" ] && [ -n "${E2E_ROOM_ID:-}" ]; then
+    curl -sS -H "Authorization: Bearer ${E2E_SENDER_TOKEN}" \
+      "http://localhost:8008/_matrix/client/v3/rooms/${E2E_ROOM_ID}/state" \
+      > "$ARTIFACTS/room-state.json" 2>&1 || true
+    python3 - <<'PY' > "$ARTIFACTS/room-state-summary.txt" 2>&1 || true
+import json
+try:
+    s = json.load(open("e2e-artifacts/room-state.json"))
+    if isinstance(s, list):
+        for e in s:
+            t = e.get("type") or ""
+            k = e.get("state_key", "")
+            sender = e.get("sender", "")
+            print(f"{t}  state_key={k!r}  sender={sender}")
+        print("---beacon state events---")
+        for e in s:
+            t = (e.get("type") or "").lower()
+            if "beacon" in t or "location" in t:
+                print(json.dumps(e, indent=2))
+    else:
+        print("unexpected response:", json.dumps(s)[:500])
+except Exception as ex:
+    print("parse error:", ex)
+PY
+    cat "$ARTIFACTS/room-state-summary.txt" || true
+    echo "=== Room messages (any m.beacon timeline events?) ==="
+    curl -sS -H "Authorization: Bearer ${E2E_SENDER_TOKEN}" \
+      "http://localhost:8008/_matrix/client/v3/rooms/${E2E_ROOM_ID}/messages?dir=b&limit=50" \
+      > "$ARTIFACTS/room-messages.json" 2>&1 || true
+    python3 - <<'PY' > "$ARTIFACTS/room-messages-summary.txt" 2>&1 || true
+import json
+try:
+    s = json.load(open("e2e-artifacts/room-messages.json"))
+    chunk = s.get("chunk", []) if isinstance(s, dict) else []
+    for e in chunk:
+        print(f"{e.get('type')}  sender={e.get('sender')}")
+    print("---beacon/location timeline events---")
+    for e in chunk:
+        t = (e.get("type") or "").lower()
+        if "beacon" in t or "location" in t:
+            print(json.dumps(e, indent=2))
+except Exception as ex:
+    print("parse error:", ex)
+PY
+    cat "$ARTIFACTS/room-messages-summary.txt" || true
+  else
+    echo "(E2E_SENDER_TOKEN or E2E_ROOM_ID missing)"
+  fi
+
   echo "=== UI hierarchy (last known) ==="
   adb shell uiautomator dump /sdcard/ui.xml 2>&1 || true
   adb exec-out cat /sdcard/ui.xml > "$ARTIFACTS/ui.xml" 2>/dev/null || true
@@ -41,19 +84,15 @@ on_exit() {
   cat "$ARTIFACTS/verifier.log" 2>/dev/null || echo "(no verifier.log)"
   echo "=== maestro.log (tail 200) ==="
   tail -n 200 "$ARTIFACTS/maestro.log" 2>/dev/null || echo "(no maestro.log)"
-  echo "=== logcat (tail 100) ==="
-  tail -n 100 "$ARTIFACTS/logcat.txt" 2>/dev/null || echo "(no logcat.txt)"
-  # Filter logcat for signals related to live-location sharing so I can
-  # see why the verifier didn't get any beacon.
-  echo "=== logcat: live-location / beacon / foreground service signals ==="
-  grep -iE "LiveLocation|beacon|startLiveLocation|sendLiveLocation|ForegroundService|location.impl|LocationManager|ACCESS_FINE_LOCATION|room.send|startForeground" \
-    "$ARTIFACTS/logcat.txt" 2>/dev/null | tail -n 200 | tee "$ARTIFACTS/logcat-live.txt" || echo "(no logcat.txt)"
+  echo "=== logcat: Element X app only ==="
+  grep -E "io\.element|LiveLocation|startForeground|startLiveLocation|sendLiveLocation|matrix\.rust" \
+    "$ARTIFACTS/logcat.txt" 2>/dev/null | tail -n 200 | tee "$ARTIFACTS/logcat-app.txt" || true
   emit_annotation warning "maestro.log" "$ARTIFACTS/maestro.log"
-  emit_annotation warning "logcat-live" "$ARTIFACTS/logcat-live.txt"
+  emit_annotation warning "logcat-app" "$ARTIFACTS/logcat-app.txt"
   emit_annotation warning "verifier.log" "$ARTIFACTS/verifier.log"
-  emit_annotation warning "logcat" "$ARTIFACTS/logcat.txt"
+  emit_annotation notice "room-state-summary" "$ARTIFACTS/room-state-summary.txt"
+  emit_annotation notice "room-messages-summary" "$ARTIFACTS/room-messages-summary.txt"
   emit_annotation notice "synapse-versions" "$ARTIFACTS/synapse-versions.json"
-  emit_annotation notice "emulator->synapse" "$ARTIFACTS/emulator-synapse.txt"
   emit_annotation notice "ui.xml (head)" "$ARTIFACTS/ui.xml"
   echo "::notice title=e2e trap::exit=$rc maestro_rc=${MAESTRO_RC:-?} verifier_rc=${VERIFIER_RC:-?}"
 }
