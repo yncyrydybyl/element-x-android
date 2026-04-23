@@ -57,16 +57,25 @@ appId: io.element.android.x.debug
     timeout: 5000
     optional: true
 
+# Target the input via its Compose testTag (change_server-server).
 - tapOn:
-    text: "Homeserver address"
-    optional: true
-- tapOn:
-    text: "Homeserver URL"
+    id: "change_server-server"
     optional: true
 - eraseText
 - inputText: ${MAESTRO_HOMESERVER_URL}
+# Submit: SearchAccountProvider uses the keyboard's Done action.
+- hideKeyboard
 - tapOn:
     text: "Continue"
+    optional: true
+# After the URL resolves, a matching provider row is rendered with
+# the host as its label. Tap the first provider row to proceed.
+- tapOn:
+    text: "10.0.2.2"
+    optional: true
+- tapOn:
+    text: "http://10.0.2.2:8008"
+    optional: true
 
 # Confirm Account Provider again (now with our custom server).
 - tapOn:
