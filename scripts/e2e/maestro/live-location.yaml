@@ -20,19 +20,30 @@ appId: io.element.android.x.debug
 - tapOn:
     text: "Sign in manually"
     optional: true
-- tapOn:
-    text: "Continue"
-    optional: true
-- tapOn:
-    text: "Sign in to .*"
-    optional: true
+# On builds without QR/signup buttons this is labeled "Continue" instead.
+- runFlow:
+    when:
+      notVisible:
+        text: "Change account provider"
+      visible:
+        text: "Be in your element"
+    commands:
+      - tapOn:
+          text: "Continue"
 
-# Confirm account provider screen — choose "Change account provider".
+# Confirm Account Provider screen (single-provider mode):
+# primary button "Continue" commits to the default provider — DO NOT tap it.
+# Secondary button "Change account provider" is what we want.
 - tapOn:
     text: "Change account provider"
     optional: true
+
+# Choose Account Provider screen (picker mode): tap "Other".
 - tapOn:
     text: "Other"
+    optional: true
+- tapOn:
+    text: "Continue"
     optional: true
 
 # Select your server screen — enter custom homeserver URL.
@@ -47,7 +58,7 @@ appId: io.element.android.x.debug
 - tapOn:
     text: "Continue"
 
-# Account provider confirmation (if shown).
+# Confirm Account Provider again (now with our custom server).
 - tapOn:
     text: "Continue"
     optional: true
