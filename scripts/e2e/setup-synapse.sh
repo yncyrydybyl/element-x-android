@@ -12,7 +12,7 @@ RECEIVER_USER="receiver"
 RECEIVER_PASS="receiverpass123"
 
 echo "Waiting for Synapse at $HS_URL ..."
-for i in {1..60}; do
+for _ in {1..60}; do
   if curl -sf "$HS_URL/_matrix/client/versions" >/dev/null; then
     echo "Synapse is up."
     break

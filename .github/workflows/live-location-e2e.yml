@@ -9,6 +9,8 @@ permissions:
 env:
   GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8 -Dkotlin.daemon.jvm.options=-Xmx3g
   CI_GRADLE_ARG_PROPERTIES: --stacktrace -Dsonar.gradle.skipCompile=true --no-configuration-cache --build-cache
+  # Pin Synapse by version tag (zizmor: not :latest).
+  SYNAPSE_IMAGE: "matrixdotorg/synapse:v1.116.0"
 
 jobs:
   e2e:
@@ -16,66 +18,45 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
-    services:
-      synapse:
-        image: matrixdotorg/synapse:latest
-        env:
-          SYNAPSE_SERVER_NAME: e2e.local
-          SYNAPSE_REPORT_STATS: "no"
-          SYNAPSE_CONFIG_DIR: /data
-          SYNAPSE_CONFIG_PATH: /data/homeserver.yaml
-          UID: "0"
-          GID: "0"
-        ports:
-          - 8008:8008
-        # The image expects config on /data. We'll copy ours in via an init script
-        # mounted through the host working dir (see setup step).
-        volumes:
-          - ${{ github.workspace }}/scripts/e2e/synapse:/e2e-config
-        options: >-
-          --health-cmd "curl -sf http://localhost:8008/_matrix/client/versions || exit 1"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 30
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
-      # Provide config files to the synapse container (service starts before checkout,
-      # so on first boot its /data is empty and synapse generates its own config. We
-      # recreate the service via docker commands to pick up our config.)
-      - name: Stage synapse config
+      - name: Start Synapse (standalone container)
         run: |
           set -euxo pipefail
           sudo mkdir -p /srv/synapse-data
           sudo cp scripts/e2e/synapse/homeserver.yaml /srv/synapse-data/homeserver.yaml
           sudo cp scripts/e2e/synapse/log.config /srv/synapse-data/log.config
           sudo chown -R 991:991 /srv/synapse-data || true
-
-      - name: Start Synapse (standalone container)
-        run: |
-          set -euxo pipefail
-          docker rm -f synapse_e2e || true
-          # Generate signing key first
+          docker rm -f synapse_e2e >/dev/null 2>&1 || true
+          # Generate signing key first (into the mounted data dir).
           docker run --rm \
             -v /srv/synapse-data:/data \
             -e SYNAPSE_SERVER_NAME=e2e.local \
             -e SYNAPSE_REPORT_STATS=no \
-            matrixdotorg/synapse:latest generate
-          # Overlay our config on top of generated one
+            "$SYNAPSE_IMAGE" generate
+          # Overlay our config on top of the generated defaults.
           sudo cp scripts/e2e/synapse/homeserver.yaml /srv/synapse-data/homeserver.yaml
           sudo cp scripts/e2e/synapse/log.config /srv/synapse-data/log.config
           sudo chown -R 991:991 /srv/synapse-data || true
           docker run -d --name synapse_e2e \
             -p 8008:8008 \
             -v /srv/synapse-data:/data \
-            matrixdotorg/synapse:latest
-          for i in {1..60}; do
-            if curl -sf http://localhost:8008/_matrix/client/versions; then
-              echo "Synapse ready."; break
+            "$SYNAPSE_IMAGE"
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 \
+                  21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 \
+                  41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60; do
+            if curl -sf http://localhost:8008/_matrix/client/versions >/dev/null; then
+              echo "Synapse ready."
+              exit 0
             fi
             sleep 2
           done
+          echo "Synapse failed to come up."
+          docker logs synapse_e2e || true
+          exit 1
 
       - name: Register users and create room
         run: |
@@ -83,19 +64,17 @@ jobs:
           scripts/e2e/setup-synapse.sh
 
       - name: Use JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Configure gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@39e147cb9de83bb9910b8ef8bd7fff0ee20fcd6f # v6.0.1
         with:
           cache-read-only: false
 
       - name: Assemble debug APK (gplay)
-        env:
-          ELEMENT_ANDROID_MAPTILER_API_KEY: ${{ secrets.MAPTILER_KEY }}
         run: ./gradlew :app:assembleGplayDebug $CI_GRADLE_ARG_PROPERTIES
 
       - name: Install Maestro
@@ -115,7 +94,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Start emulator + run Maestro flow + verifier
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.37.0
         with:
           api-level: 34
           target: default
@@ -125,38 +104,36 @@ jobs:
             set -euxo pipefail
             adb install app/build/outputs/apk/gplay/debug/app-gplay-arm64-v8a-debug.apk || \
               adb install app/build/outputs/apk/gplay/debug/app-gplay-x86_64-debug.apk
-            # Grant location permissions up-front so the Maestro flow isn't blocked.
             adb shell pm grant io.element.android.x.debug android.permission.ACCESS_FINE_LOCATION
             adb shell pm grant io.element.android.x.debug android.permission.ACCESS_COARSE_LOCATION
-            # Seed a synthetic location (Berlin center).
             adb emu geo fix 13.4050 52.5200 || true
-            # Kick off the verifier in the background; it logs to stdout.
             HS_URL=http://localhost:8008 \
               python3 scripts/e2e/verify_beacon.py > verifier.log 2>&1 &
             VERIFIER_PID=$!
-            # Drive the Android app through the live-location flow.
             export MAESTRO_HOMESERVER_URL=http://10.0.2.2:8008
             export MAESTRO_USER="$E2E_SENDER_USER"
             export MAESTRO_PASSWORD="$E2E_SENDER_PASS"
             export MAESTRO_ROOM_NAME="e2e"
-            maestro test scripts/e2e/maestro/live-location.yaml || {
-              echo "Maestro flow failed. Verifier log so far:"; cat verifier.log; exit 1;
-            }
-            # After sharing starts, nudge the GPS a few times so beacons fire.
+            if ! maestro test scripts/e2e/maestro/live-location.yaml; then
+              echo "Maestro flow failed. Verifier log so far:"
+              cat verifier.log
+              exit 1
+            fi
             for i in 1 2 3 4; do
-              adb emu geo fix $(echo "13.4050 + 0.001 * $i" | bc -l) $(echo "52.5200 + 0.001 * $i" | bc -l)
+              lon=$(awk "BEGIN { printf \"%.4f\", 13.4050 + 0.001 * $i }")
+              lat=$(awk "BEGIN { printf \"%.4f\", 52.5200 + 0.001 * $i }")
+              adb emu geo fix "$lon" "$lat"
               sleep 4
             done
-            # Wait for the verifier to conclude.
             wait $VERIFIER_PID
-            echo "--- verifier.log ---"; cat verifier.log
+            echo "--- verifier.log ---"
+            cat verifier.log
 
       - name: Upload Maestro + verifier artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: live-location-e2e
           path: |
             verifier.log
             ~/.maestro/tests/**
-            /tmp/artifacts
