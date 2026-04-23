@@ -47,10 +47,10 @@ def _type_matches(etype, candidates):
     return any(etype == t or etype.startswith(t + ".") for t in candidates)
 
 
-def http_get(path):
+def http_get(path, read_timeout=60):
     url = HS_URL + path
     req = urllib.request.Request(url, headers={"Authorization": f"Bearer {TOKEN}"})
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    with urllib.request.urlopen(req, timeout=read_timeout) as resp:
         return json.loads(resp.read())
 
 
@@ -102,19 +102,30 @@ def main():
     except Exception as ex:
         print(f"(state endpoint probe failed: {ex})", flush=True)
 
-    # Long-poll sync for any new beacon updates.
+    # Poll sync in short bursts for new beacon updates. Also re-query the
+    # /state endpoint each iteration — state events that existed before
+    # the verifier's /sync cursor started may not appear in incremental
+    # syncs under all conditions.
     while time.monotonic() < deadline:
         if saw_beacon_info and beacon_count >= MIN_BEACONS:
             print(f"SUCCESS: beacon_info + {beacon_count} beacon update(s) seen.", flush=True)
             return 0
-        params = {
-            "timeout": str(int((deadline - time.monotonic()) * 1000) // 2 or 1000),
-        }
+        try:
+            rs = http_get(f"/_matrix/client/v3/rooms/{urllib.parse.quote(ROOM_ID)}/state", read_timeout=10)
+            for e in rs if isinstance(rs, list) else []:
+                t = e.get("type") or ""
+                if _type_matches(t, BEACON_INFO_TYPES):
+                    if not saw_beacon_info:
+                        print(f"[beacon_info/state-poll] {t} from {e.get('sender')}: {e.get('content')}", flush=True)
+                    saw_beacon_info = True
+        except Exception as ex:
+            print(f"state poll error: {ex}", flush=True)
+        params = {"timeout": "8000"}
         if next_batch:
             params["since"] = next_batch
         try:
-            resp = http_get("/_matrix/client/v3/sync?" + urllib.parse.urlencode(params))
-        except urllib.error.URLError as ex:
+            resp = http_get("/_matrix/client/v3/sync?" + urllib.parse.urlencode(params), read_timeout=30)
+        except Exception as ex:
             print(f"sync error: {ex}", flush=True)
             time.sleep(2)
             continue
