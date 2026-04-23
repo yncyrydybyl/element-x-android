@@ -67,10 +67,17 @@ android {
                 reset()
 
                 if (!buildingAppBundle) {
-                    // Specifies a list of ABIs that Gradle should create APKs for.
-                    include("armeabi-v7a", "x86", "arm64-v8a", "x86_64")
-                    // Generate a universal APK that includes all ABIs, so user who installs from CI tool can use this one by default.
-                    isUniversalApk = true
+                    val fastDebug = providers.gradleProperty("fastDebug").orNull == "true"
+                    if (fastDebug) {
+                        // Only the ABI that testers' phones use; skip the others and the universal APK.
+                        include("arm64-v8a")
+                        isUniversalApk = false
+                    } else {
+                        // Specifies a list of ABIs that Gradle should create APKs for.
+                        include("armeabi-v7a", "x86", "arm64-v8a", "x86_64")
+                        // Generate a universal APK that includes all ABIs, so user who installs from CI tool can use this one by default.
+                        isUniversalApk = true
+                    }
                 }
             }
         }
