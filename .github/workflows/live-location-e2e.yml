@@ -37,10 +37,12 @@ jobs:
           sudo mkdir -p /srv/synapse-data
           sudo chown -R 991:991 /srv/synapse-data || true
           docker rm -f synapse_e2e >/dev/null 2>&1 || true
-          # Let Synapse generate its own default config + signing key.
+          # server_name must match what Element X derives from the homeserver URL
+          # (10.0.2.2 from the emulator) so user IDs @sender:10.0.2.2 are accepted
+          # at login.
           docker run --rm \
             -v /srv/synapse-data:/data \
-            -e SYNAPSE_SERVER_NAME=e2e.local \
+            -e SYNAPSE_SERVER_NAME=10.0.2.2 \
             -e SYNAPSE_REPORT_STATS=no \
             "$SYNAPSE_IMAGE" generate
           # Append our open-registration overrides to the generated config.
