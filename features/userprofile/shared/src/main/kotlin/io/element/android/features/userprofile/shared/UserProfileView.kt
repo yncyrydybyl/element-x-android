@@ -78,6 +78,7 @@ fun UserProfileView(
                 userId = state.userId,
                 userName = state.userName,
                 verificationState = state.verificationState,
+                displayedStatus = state.displayedStatus,
                 openAvatarPreview = { avatarUrl ->
                     openAvatarPreview(state.userName ?: state.userId.value, avatarUrl)
                 },
@@ -114,6 +115,7 @@ fun UserProfileView(
                     if (data is ConfirmingStartDmWithMatrixUser) {
                         CreateDmConfirmationBottomSheet(
                             matrixUser = data.matrixUser,
+                            isUserIdentityUnknown = data.isUserIdentityUnknown,
                             onSendInvite = {
                                 state.eventSink(UserProfileEvents.StartDM)
                             },

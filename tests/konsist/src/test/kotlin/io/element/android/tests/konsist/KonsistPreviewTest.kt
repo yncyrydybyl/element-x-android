@@ -30,7 +30,8 @@ class KonsistPreviewTest {
             .assertTrue {
                 it.hasNameEndingWith("Preview") &&
                     it.hasNameEndingWith("LightPreview").not() &&
-                    it.hasNameEndingWith("DarkPreview").not()
+                    it.hasNameEndingWith("DarkPreview").not() &&
+                    it.hasNameEndingWith("BlackPreview").not()
             }
     }
 
@@ -86,6 +87,9 @@ class KonsistPreviewTest {
         "BackgroundVerticalGradientDisabledPreview",
         "BackgroundVerticalGradientPreview",
         "ColorAliasesPreview",
+        "EmojiItemWithPopupPreview",
+        "EnterpriseExtraDeveloperOptionsRendererBottomSheetPreview",
+        "EnterpriseExtraDeveloperOptionsRendererListItemPreview",
         "FocusedEventPreview",
         "GradientFloatingActionButtonCircleShapePreview",
         "HeaderFooterPageScrollablePreview",
@@ -143,22 +147,36 @@ class KonsistPreviewTest {
         "TextComposerVoiceNotEncryptedPreview",
         "TextComposerVoicePreview",
         "TextFieldDialogWithErrorPreview",
-        "TimelineImageWithCaptionRowPreview",
+        "TimelineItemAttachmentsViewScanningContentFailedPreview",
+        "TimelineItemAudioViewScanningContentPreview",
         "TimelineItemEventRowForDirectRoomPreview",
         "TimelineItemEventRowShieldPreview",
         "TimelineItemEventRowTimestampPreview",
         "TimelineItemEventRowUtdPreview",
+        "TimelineItemEventRowWithGalleryPreview",
         "TimelineItemEventRowWithManyReactionsPreview",
         "TimelineItemEventRowWithRRPreview",
         "TimelineItemEventRowWithReplyPreview",
         "TimelineItemEventRowWithThreadSummaryPreview",
+        "TimelineItemFileViewScanningContentPreview",
+        "TimelineItemGalleryViewScanningContentFailedPreview",
         "TimelineItemGroupedEventsRowContentCollapsePreview",
         "TimelineItemGroupedEventsRowContentExpandedPreview",
         "TimelineItemImageViewHideMediaContentPreview",
+        "TimelineItemImageViewScanningContentPreview",
+        "TimelineItemRedactedMessagesGroupPreview",
+        "TimelineItemScanningContentFailedPreview",
+        "TimelineItemScanningContentNotFoundPreview",
+        "TimelineItemScanningContentWithInvalidRepliesPreview",
+        "TimelineItemScanningContentWithRepliesFailedPreview",
+        "TimelineItemStickerViewScanningContentPreview",
         "TimelineItemVideoViewHideMediaContentPreview",
+        "TimelineItemVideoViewScanningContentPreview",
+        "TimelineItemVoiceViewScanningContentPreview",
         "TimelineItemVoiceViewUnifiedPreview",
-        "TimelineVideoWithCaptionRowPreview",
         "TimelineViewMessageShieldPreview",
+        "TimelineViewWithReadMarkerBothIndicatorsPreview",
+        "TimelineViewWithReadMarkerJumpToUnreadIndicatorOnlyPreview",
         "UserAvatarColorsPreview",
         "UserProfileHeaderSectionWithVerificationViolationPreview",
         "VoiceItemViewPlayPreview",

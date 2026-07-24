@@ -16,7 +16,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalRippleConfiguration
+import androidx.compose.material3.LocalRippleThemeConfiguration
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RippleConfiguration
+import androidx.compose.material3.RippleThemeConfiguration
 import androidx.compose.material3.Typography
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -28,6 +32,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import io.element.android.compound.tokens.compoundTypography
 import io.element.android.compound.tokens.generated.SemanticColors
 import io.element.android.compound.tokens.generated.TypographyTokens
@@ -77,10 +82,10 @@ internal val LocalCompoundColors = staticCompositionLocalOf { compoundColorsLigh
 /**
  * Sets up the theme for the application, or a part of it.
  *
- * @param darkTheme whether to use the dark theme or not. If `true`, the dark theme will be used.
+ * @param theme the [Theme] to use. Defaults to [Theme.Dark] or [Theme.Light] based on the system setting.
  * @param applySystemBarsUpdate whether to update the system bars color scheme or not when the theme changes. It's `true` by default.
  * This is specially useful when you want to apply an alternate theme to a part of the app but don't want it to affect the system bars.
- * @param lightStatusBar whether to use a light status bar color scheme or not. By default, it's the opposite of [darkTheme].
+ * @param lightStatusBar whether to use a light status bar color scheme or not. By default, it's `true` for light themes and `false` for dark ones.
  * @param dynamicColor whether to enable MaterialYou or not. It's `false` by default.
  * @param compoundLight the [SemanticColors] to use in light theme.
  * @param compoundDark the [SemanticColors] to use in dark theme.
@@ -91,9 +96,9 @@ internal val LocalCompoundColors = staticCompositionLocalOf { compoundColorsLigh
  */
 @Composable
 fun ElementTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    theme: Theme = if (isSystemInDarkTheme()) Theme.Dark else Theme.Light,
     applySystemBarsUpdate: Boolean = true,
-    lightStatusBar: Boolean = !darkTheme,
+    lightStatusBar: Boolean = !theme.isDark(),
     // true to enable MaterialYou
     dynamicColor: Boolean = false,
     compoundLight: SemanticColors = compoundColorsLight,
@@ -103,8 +108,13 @@ fun ElementTheme(
     typography: Typography = compoundTypography,
     content: @Composable () -> Unit,
 ) {
+    val darkTheme = theme.isDark()
     val currentCompoundColor = when {
-        darkTheme -> compoundDark
+        darkTheme -> if (theme == Theme.Black) {
+            compoundDark.copy(bgCanvasDefault = Color.Black)
+        } else {
+            compoundDark
+        }
         else -> compoundLight
     }
 
@@ -113,7 +123,11 @@ fun ElementTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> materialColorsDark
+        darkTheme -> if (theme == Theme.Black) {
+            currentCompoundColor.toMaterialColorScheme()
+        } else {
+            materialColorsDark
+        }
         else -> materialColorsLight
     }
 
@@ -130,7 +144,7 @@ fun ElementTheme(
 
     if (applySystemBarsUpdate) {
         val activity = LocalActivity.current as? ComponentActivity
-        LaunchedEffect(statusBarColorScheme, darkTheme, lightStatusBar) {
+        LaunchedEffect(statusBarColorScheme, theme, lightStatusBar) {
             activity?.enableEdgeToEdge(
                 // For Status bar use the background color of the app
                 statusBarStyle = SystemBarStyle.auto(
@@ -150,6 +164,26 @@ fun ElementTheme(
     CompositionLocalProvider(
         LocalCompoundColors provides currentCompoundColor,
         LocalContentColor provides colorScheme.onSurface,
+        // Configure the keyboard focus style: Draw a blue inset ring around the focused component.
+        // Ref: https://www.figma.com/design/hlbsmSekQorGRN1t2R9JEy/Accessibility-checks?node-id=271-42066
+        // By default, a semi-transparent black overlay is used
+        LocalRippleThemeConfiguration provides RippleThemeConfiguration(
+            RippleThemeConfiguration.Focus.InsetRing(
+                outerStrokeInset = 0.dp,
+                outerStrokeWidth = 2.dp,
+                innerStrokeInset = 0.dp,
+                innerStrokeWidth = 0.dp,
+            )
+        ),
+        // Configure the keyboard focus color.
+        // By default, ColorScheme.secondary is used
+        LocalRippleConfiguration provides
+            RippleConfiguration(
+                focus = RippleConfiguration.Focus.InsetRing(
+                    outerStrokeColor = ElementTheme.colors.borderFocused,
+                    innerStrokeColor = Color.Transparent,
+                )
+            ),
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
