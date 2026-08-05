@@ -2,8 +2,9 @@ name: Update Gradle Wrapper
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 0 * * *"
+  # Scheduled runs disabled in this fork: the upstream job needs the
+  # DANGER_GITHUB_API_TOKEN secret (unset here), so the daily cron only produced
+  # failing runs ("repo-token cannot be empty"). Trigger manually if needed.
 
 permissions: {}
 
