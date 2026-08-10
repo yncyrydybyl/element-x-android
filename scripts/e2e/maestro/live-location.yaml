@@ -1,0 +1,185 @@
+# Maestro flow: drive Element X through the live-location sharing flow
+# against a local Synapse homeserver.
+#
+# Required env vars (exported by setup-synapse.sh + workflow):
+#   MAESTRO_HOMESERVER_URL   e.g. http://10.0.2.2:8008
+#   MAESTRO_USER             e.g. sender
+#   MAESTRO_PASSWORD         e.g. senderpass123
+#   MAESTRO_ROOM_NAME        e.g. e2e
+appId: io.element.android.x.debug
+---
+- launchApp:
+    clearState: true
+
+# Welcome screen ("Be in your element") → tap the manual sign-in button.
+- extendedWaitUntil:
+    visible:
+      text: "Be in your element"
+    timeout: 30000
+
+- tapOn:
+    text: "Sign in manually"
+    optional: true
+# On builds without QR/signup buttons this is labeled "Continue" instead.
+- runFlow:
+    when:
+      notVisible:
+        text: "Change account provider"
+      visible:
+        text: "Be in your element"
+    commands:
+      - tapOn:
+          text: "Continue"
+
+# Confirm Account Provider screen (single-provider mode):
+# primary button "Continue" commits to the default provider — DO NOT tap it.
+# Secondary button "Change account provider" is what we want.
+- tapOn:
+    text: "Change account provider"
+    optional: true
+
+# Choose Account Provider screen (picker mode): tap "Other".
+- tapOn:
+    text: "Other"
+    optional: true
+
+# Search Account Provider / Select your server screen — enter custom URL.
+# Title variants: "Find an account provider" (SearchAccountProviderView)
+# or "Select your server" (ChangeServerView).
+- extendedWaitUntil:
+    visible:
+      text: "Find an account provider"
+    timeout: 20000
+    optional: true
+- extendedWaitUntil:
+    visible:
+      text: "Select your server"
+    timeout: 5000
+    optional: true
+
+# Target the input via its Compose testTag (change_server-server).
+- tapOn:
+    id: "change_server-server"
+    optional: true
+- eraseText
+- inputText: ${MAESTRO_HOMESERVER_URL}
+- hideKeyboard
+# Wait for the homeserver resolver to emit the matched provider row.
+# Its title is the URL with the scheme stripped (AccountProvider.title).
+- extendedWaitUntil:
+    visible:
+      text: "10.0.2.2:8008"
+    timeout: 15000
+- tapOn:
+    text: "10.0.2.2:8008"
+
+# Confirm Account Provider again (now with our custom server).
+- tapOn:
+    text: "Continue"
+    optional: true
+
+# Login form: "Welcome back!" / "Enter your details".
+- extendedWaitUntil:
+    visible:
+      text: "Enter your details"
+    timeout: 30000
+- tapOn:
+    id: "login-email_username"
+- inputText: ${MAESTRO_USER}
+- tapOn:
+    id: "login-password"
+- inputText: ${MAESTRO_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: "login-continue"
+
+# Skip analytics / session verification / encryption prompts.
+- tapOn:
+    text: "Not now"
+    optional: true
+- tapOn:
+    text: "Later"
+    optional: true
+- tapOn:
+    text: "I'll do it later"
+    optional: true
+- tapOn:
+    text: "Skip"
+    optional: true
+# "No distributors available" notification error (always on emulators).
+- runFlow:
+    when:
+      visible:
+        text: "No distributors available"
+    commands:
+      - tapOn:
+          text: "Do not show this again"
+          optional: true
+      - tapOn:
+          text: "OK"
+          optional: true
+      - tapOn:
+          text: "Dismiss"
+          optional: true
+- tapOn:
+    text: "OK"
+    optional: true
+
+# Room list: open the shared room.
+- extendedWaitUntil:
+    visible:
+      text: ${MAESTRO_ROOM_NAME}
+    timeout: 90000
+- tapOn:
+    text: ${MAESTRO_ROOM_NAME}
+
+# Location pin in the top app bar opens Share Location directly.
+- tapOn:
+    text: "Share live location"
+    optional: true
+
+# If we landed in the attachment sheet instead, pick Share Location.
+- tapOn:
+    text: "Share location"
+    optional: true
+- tapOn:
+    text: "Share live location"
+    optional: true
+
+# Accept Android runtime permission dialog (if it appears on top).
+- runFlow:
+    when:
+      visible:
+        text: "While using the app"
+    commands:
+      - tapOn: "While using the app"
+- runFlow:
+    when:
+      visible:
+        text: "Allow"
+    commands:
+      - tapOn: "Allow"
+
+# Privacy disclaimer ("Share your live location?" → Continue).
+- extendedWaitUntil:
+    visible:
+      text: "Share your live location?"
+    timeout: 20000
+- tapOn:
+    text: "Continue"
+
+# Duration picker — pick the shortest.
+- extendedWaitUntil:
+    visible:
+      text: "15 minutes"
+    timeout: 15000
+- tapOn:
+    text: "15 minutes"
+- tapOn:
+    text: "Continue"
+
+# Confirm the banner appeared so we know sharing is active.
+- extendedWaitUntil:
+    visible:
+      text: "You are sharing your live location"
+    timeout: 60000

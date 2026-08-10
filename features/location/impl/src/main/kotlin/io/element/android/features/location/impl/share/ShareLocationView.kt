@@ -29,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -44,11 +43,11 @@ import io.element.android.features.location.impl.common.ui.LocationFloatingActio
 import io.element.android.features.location.impl.common.ui.MapBottomSheetScaffold
 import io.element.android.features.location.impl.common.ui.UserLocationPuck
 import io.element.android.features.location.impl.common.ui.rememberUserLocationState
-import io.element.android.libraries.androidutils.system.toast
 import io.element.android.libraries.designsystem.components.LocationPin
 import io.element.android.libraries.designsystem.components.PinVariant
 import io.element.android.libraries.designsystem.components.avatar.AvatarSize
 import io.element.android.libraries.designsystem.components.button.BackButton
+import io.element.android.libraries.designsystem.components.dialogs.ConfirmationDialog
 import io.element.android.libraries.designsystem.components.dialogs.ListDialog
 import io.element.android.libraries.designsystem.components.list.ListItemContent
 import io.element.android.libraries.designsystem.components.list.RadioButtonListItem
@@ -74,7 +73,6 @@ fun ShareLocationView(
     navigateUp: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
     when (val dialogState = state.dialogState) {
         ShareLocationState.Dialog.None -> Unit
         is ShareLocationState.Dialog.Constraints -> LocationConstraintsDialog(
@@ -89,9 +87,15 @@ fun ShareLocationView(
             durations = dialogState.durations,
             onSelectDuration = { duration ->
                 state.eventSink(ShareLocationEvent.StartLiveLocationShare(duration))
-                context.toast("Not implemented yet!")
                 navigateUp()
             },
+            onDismiss = { state.eventSink(ShareLocationEvent.DismissDialog) },
+        )
+        ShareLocationState.Dialog.LiveLocationDisclaimer -> ConfirmationDialog(
+            title = stringResource(R.string.screen_live_location_disclaimer_title),
+            content = stringResource(R.string.screen_live_location_disclaimer_message),
+            submitText = stringResource(CommonStrings.action_continue),
+            onSubmitClick = { state.eventSink(ShareLocationEvent.AcknowledgeLiveLocationDisclaimer) },
             onDismiss = { state.eventSink(ShareLocationEvent.DismissDialog) },
         )
     }

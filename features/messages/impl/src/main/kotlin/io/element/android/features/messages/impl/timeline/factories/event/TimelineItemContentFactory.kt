@@ -14,6 +14,7 @@ import io.element.android.features.messages.impl.timeline.model.event.TimelineIt
 import io.element.android.features.messages.impl.timeline.model.event.TimelineItemLegacyCallInviteContent
 import io.element.android.features.messages.impl.timeline.model.event.TimelineItemLocationContent
 import io.element.android.features.messages.impl.timeline.model.event.TimelineItemRtcNotificationContent
+import io.element.android.features.messages.impl.timeline.model.event.TimelineItemStateEventContent
 import io.element.android.features.messages.impl.timeline.model.event.TimelineItemUnknownContent
 import io.element.android.libraries.matrix.api.core.EventId
 import io.element.android.libraries.matrix.api.core.SessionId
@@ -36,6 +37,8 @@ import io.element.android.libraries.matrix.api.timeline.item.event.StickerConten
 import io.element.android.libraries.matrix.api.timeline.item.event.UnableToDecryptContent
 import io.element.android.libraries.matrix.api.timeline.item.event.UnknownContent
 import io.element.android.libraries.matrix.api.timeline.item.event.getDisambiguatedDisplayName
+import io.element.android.libraries.ui.strings.CommonStrings
+import io.element.android.services.toolbox.api.strings.StringProvider
 
 @Inject
 class TimelineItemContentFactory(
@@ -50,6 +53,7 @@ class TimelineItemContentFactory(
     private val failedToParseMessageFactory: TimelineItemContentFailedToParseMessageFactory,
     private val failedToParseStateFactory: TimelineItemContentFailedToParseStateFactory,
     private val sessionId: SessionId,
+    private val stringProvider: StringProvider,
 ) {
     suspend fun create(eventTimelineItem: EventTimelineItem): TimelineItemEventContent {
         return create(
@@ -114,7 +118,9 @@ class TimelineItemContentFactory(
                         mode = TimelineItemLocationContent.Mode.Live(isActive = itemContent.isLive)
                     )
                 } else {
-                    TimelineItemUnknownContent
+                    // Beacon announcement with no location pushes yet — surface it as a
+                    // state-style notice so it doesn't render as "Unsupported event".
+                    TimelineItemStateEventContent(body = stringProvider.getString(CommonStrings.common_live_location))
                 }
             }
         }

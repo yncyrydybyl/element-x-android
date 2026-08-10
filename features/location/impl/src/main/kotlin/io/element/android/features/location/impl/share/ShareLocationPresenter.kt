@@ -29,6 +29,7 @@ import io.element.android.features.location.impl.common.permissions.PermissionsE
 import io.element.android.features.location.impl.common.permissions.PermissionsPresenter
 import io.element.android.features.location.impl.common.permissions.PermissionsState
 import io.element.android.features.location.impl.common.toDialogState
+import io.element.android.features.location.impl.live.LiveLocationShareManager
 import io.element.android.features.location.impl.share.ShareLocationState.Dialog.Constraints
 import io.element.android.features.messages.api.MessageComposerContext
 import io.element.android.libraries.architecture.Presenter
@@ -63,6 +64,7 @@ class ShareLocationPresenter(
     private val featureFlagService: FeatureFlagService,
     private val client: MatrixClient,
     private val durationFormatter: DurationFormatter,
+    private val liveLocationShareManager: LiveLocationShareManager,
 ) : Presenter<ShareLocationState> {
     @AssistedFactory
     fun interface Factory {
@@ -84,6 +86,8 @@ class ShareLocationPresenter(
         }
         val currentUser by client.userProfile.collectAsState()
         val scope = rememberCoroutineScope()
+        var liveLocationDisclaimerAcknowledged by remember { mutableStateOf(false) }
+        var hasAutoRequestedPermissions by remember { mutableStateOf(false) }
 
         fun checkLocationConstraints() {
             val locationConstraints = checkLocationConstraints(permissionsState, locationActions)
@@ -91,7 +95,28 @@ class ShareLocationPresenter(
             trackUserPosition = locationConstraints is LocationConstraintsCheck.Success
         }
 
-        LaunchedEffect(permissionsState.permissions) { checkLocationConstraints() }
+        LaunchedEffect(permissionsState.permissions) {
+            if (
+                !hasAutoRequestedPermissions &&
+                !permissionsState.isAnyGranted &&
+                !permissionsState.shouldShowRationale
+            ) {
+                // Never asked before: trigger the Android system dialog directly
+                // instead of falling into the 'permanently denied' branch that just
+                // opens app settings.
+                hasAutoRequestedPermissions = true
+                permissionsState.eventSink(PermissionsEvents.RequestPermissions)
+            } else {
+                checkLocationConstraints()
+            }
+        }
+
+        fun showLiveLocationDurationPicker() {
+            val durations = LIVE_LOCATION_DURATIONS.map {
+                LiveLocationDuration(duration = it, formatted = durationFormatter.format(it))
+            }
+            dialogState = ShareLocationState.Dialog.LiveLocationDurations(durations.toImmutableList())
+        }
 
         fun handleEvent(event: ShareLocationEvent) {
             when (event) {
@@ -111,18 +136,25 @@ class ShareLocationPresenter(
                 }
                 ShareLocationEvent.ShowLiveLocationDurationPicker -> {
                     val constraintsResult = checkLocationConstraints(permissionsState, locationActions)
-                    dialogState = if (constraintsResult is LocationConstraintsCheck.Success) {
-                        val durations = LIVE_LOCATION_DURATIONS.map {
-                            LiveLocationDuration(duration = it, formatted = durationFormatter.format(it))
-                        }
-                        ShareLocationState.Dialog.LiveLocationDurations(durations.toImmutableList())
+                    if (constraintsResult !is LocationConstraintsCheck.Success) {
+                        dialogState = Constraints(constraintsResult.toDialogState())
+                    } else if (!liveLocationDisclaimerAcknowledged) {
+                        dialogState = ShareLocationState.Dialog.LiveLocationDisclaimer
                     } else {
-                        Constraints(constraintsResult.toDialogState())
+                        showLiveLocationDurationPicker()
                     }
+                }
+                ShareLocationEvent.AcknowledgeLiveLocationDisclaimer -> {
+                    liveLocationDisclaimerAcknowledged = true
+                    showLiveLocationDurationPicker()
                 }
                 is ShareLocationEvent.StartLiveLocationShare -> scope.launch {
                     dialogState = ShareLocationState.Dialog.None
-                    // room.startLiveLocationShare(event.duration.inWholeMilliseconds)
+                    liveLocationShareManager.start(
+                        sessionId = client.sessionId,
+                        roomId = room.roomId,
+                        duration = event.duration,
+                    )
                 }
                 ShareLocationEvent.RequestPermissions -> {
                     dialogState = ShareLocationState.Dialog.None

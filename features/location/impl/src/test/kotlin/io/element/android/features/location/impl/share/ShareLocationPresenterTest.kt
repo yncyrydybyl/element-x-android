@@ -22,6 +22,7 @@ import io.element.android.features.location.impl.common.permissions.FakePermissi
 import io.element.android.features.location.impl.common.permissions.PermissionsEvents
 import io.element.android.features.location.impl.common.permissions.PermissionsState
 import io.element.android.features.location.impl.common.ui.LocationConstraintsDialogState
+import io.element.android.features.location.impl.live.FakeLiveLocationShareManager
 import io.element.android.features.messages.test.FakeMessageComposerContext
 import io.element.android.libraries.dateformatter.test.FakeDurationFormatter
 import io.element.android.libraries.featureflag.test.FakeFeatureFlagService
@@ -56,6 +57,7 @@ class ShareLocationPresenterTest {
     private val fakeBuildMeta = aBuildMeta(applicationName = "app name")
     private val fakeFeatureFlagService = FakeFeatureFlagService()
     private val fakeMatrixClient = FakeMatrixClient(sessionId = A_USER_ID)
+    private val fakeLiveLocationShareManager = FakeLiveLocationShareManager()
 
     private val durationFormatter = FakeDurationFormatter()
 
@@ -73,6 +75,7 @@ class ShareLocationPresenterTest {
         featureFlagService = fakeFeatureFlagService,
         client = fakeMatrixClient,
         durationFormatter = durationFormatter,
+        liveLocationShareManager = fakeLiveLocationShareManager,
     )
 
     @Test
@@ -295,7 +298,7 @@ class ShareLocationPresenterTest {
     }
 
     @Test
-    fun `ShowLiveLocationDurationPicker shows duration dialog when constraints pass`() = runTest {
+    fun `ShowLiveLocationDurationPicker shows disclaimer then duration dialog when constraints pass`() = runTest {
         val shareLocationPresenter = createShareLocationPresenter()
         fakePermissionsPresenter.givenState(
             aPermissionsState(
@@ -308,8 +311,11 @@ class ShareLocationPresenterTest {
             skipItems(1)
             val initialState = awaitItem()
             initialState.eventSink(ShareLocationEvent.ShowLiveLocationDurationPicker)
-            val durationDialogState = awaitItem()
+            val disclaimerState = awaitItem()
+            assertThat(disclaimerState.dialogState).isEqualTo(ShareLocationState.Dialog.LiveLocationDisclaimer)
 
+            disclaimerState.eventSink(ShareLocationEvent.AcknowledgeLiveLocationDisclaimer)
+            val durationDialogState = awaitItem()
             assertThat(durationDialogState.dialogState).isInstanceOf(ShareLocationState.Dialog.LiveLocationDurations::class.java)
             cancelAndIgnoreRemainingEvents()
         }
