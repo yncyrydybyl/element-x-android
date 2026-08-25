@@ -67,6 +67,7 @@ fun DesktopNoticeView(
         title = stringResource(R.string.screen_link_new_device_desktop_title, appName),
         iconStyle = BigIcon.Style.Default(CompoundIcons.Computer()),
         modifier = modifier,
+        isScrollable = true,
         buttons = {
             Button(
                 text = stringResource(R.string.screen_link_new_device_desktop_submit),
@@ -117,7 +118,7 @@ fun DesktopNoticeView(
 @PreviewsDayNight
 @Composable
 internal fun DesktopNoticeViewPreview(
-    @PreviewParameter(DesktopNoticeStateProvider::class) state: DesktopNoticeState,
+    @PreviewParameter(DesktopNoticeStatePreviewParam::class) state: DesktopNoticeState,
 ) = ElementPreview {
     DesktopNoticeView(
         state = state,
