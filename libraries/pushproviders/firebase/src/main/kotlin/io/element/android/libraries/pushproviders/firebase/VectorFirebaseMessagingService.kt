@@ -15,7 +15,7 @@ import dev.zacsweers.metro.Inject
 import io.element.android.libraries.architecture.bindings
 import io.element.android.libraries.core.log.logger.LoggerTag
 import io.element.android.libraries.di.annotations.AppCoroutineScope
-import io.element.android.libraries.push.api.push.PushHandlingWakeLock
+import io.element.android.libraries.push.api.push.FetchPushForegroundServiceManager
 import io.element.android.libraries.pushproviders.api.PushHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -24,10 +24,10 @@ import timber.log.Timber
 private val loggerTag = LoggerTag("VectorFirebaseMessagingService", LoggerTag.PushLoggerTag)
 
 class VectorFirebaseMessagingService : FirebaseMessagingService() {
-    @Inject lateinit var firebaseNewTokenHandler: FirebaseNewTokenHandler
+    @Inject lateinit var firebaseNewInstallationIdHandler: FirebaseNewInstallationIdHandler
     @Inject lateinit var pushParser: FirebasePushParser
     @Inject lateinit var pushHandler: PushHandler
-    @Inject lateinit var pushHandlingWakeLock: PushHandlingWakeLock
+    @Inject lateinit var fetchPushForegroundServiceManager: FetchPushForegroundServiceManager
     @AppCoroutineScope
     @Inject lateinit var coroutineScope: CoroutineScope
 
@@ -36,10 +36,12 @@ class VectorFirebaseMessagingService : FirebaseMessagingService() {
         bindings<VectorFirebaseMessagingServiceBindings>().inject(this)
     }
 
-    override fun onNewToken(token: String) {
-        Timber.tag(loggerTag.value).w("New Firebase token")
+    override fun onRegistered(installationId: String) {
+        super.onRegistered(installationId)
+
+        Timber.tag(loggerTag.value).w("New Firebase installation id")
         coroutineScope.launch {
-            firebaseNewTokenHandler.handle(token)
+            firebaseNewInstallationIdHandler.handle(installationId)
         }
     }
 
@@ -49,7 +51,7 @@ class VectorFirebaseMessagingService : FirebaseMessagingService() {
         val isHighPriority = message.priority == PRIORITY_HIGH
         if (isHighPriority) {
             // Acquire wakelock to ensure the device stays awake while we handle the push and schedule and run the work
-            pushHandlingWakeLock.lock()
+            fetchPushForegroundServiceManager.start()
         }
 
         coroutineScope.launch {
@@ -63,7 +65,7 @@ class VectorFirebaseMessagingService : FirebaseMessagingService() {
                     },
                 )
                 if (isHighPriority) {
-                    pushHandlingWakeLock.unlock()
+                    fetchPushForegroundServiceManager.stop()
                 }
             } else {
                 val handled = pushHandler.handle(
@@ -73,7 +75,7 @@ class VectorFirebaseMessagingService : FirebaseMessagingService() {
 
                 // If we failed to handle the push, we should release the wakelock early to avoid keeping the device awake for too long.
                 if (!handled && isHighPriority) {
-                    pushHandlingWakeLock.unlock()
+                    fetchPushForegroundServiceManager.stop()
                 }
             }
         }

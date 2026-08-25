@@ -53,6 +53,7 @@
   <string name="screen_room_details_invite_people_dont_close">"Stäng inte appen förrän det är klart."</string>
   <string name="screen_room_details_invite_people_preparing">"Förbereder inbjudningar …"</string>
   <string name="screen_room_details_invite_people_title">"Bjud in personer"</string>
+  <string name="screen_room_details_invite_title">"Bjud in"</string>
   <string name="screen_room_details_leave_conversation_title">"Lämna konversation"</string>
   <string name="screen_room_details_leave_room_title">"Lämna rum"</string>
   <string name="screen_room_details_media_gallery_title">"Media och filer"</string>
@@ -98,7 +99,6 @@
   <string name="screen_room_notification_settings_error_setting_mode">"Misslyckades att ställa in läget, vänligen pröva igen."</string>
   <string name="screen_room_notification_settings_mentions_only_disclaimer">"Din hemserver stöder inte det här alternativet i krypterade rum, du blir inte aviserad i det här rummet."</string>
   <string name="screen_room_notification_settings_mode_all_messages">"Alla meddelanden"</string>
-  <string name="screen_room_notification_settings_mode_mentions_and_keywords">"Endast omnämnanden och nyckelord"</string>
   <string name="screen_room_notification_settings_room_custom_settings_title">"I det här rummet, meddela mig för"</string>
   <string name="screen_room_roles_and_permissions_admins">"Administratörer"</string>
   <string name="screen_room_roles_and_permissions_admins_and_owners">"Administratörer och ägare"</string>
@@ -115,6 +115,8 @@
   <string name="screen_room_roles_and_permissions_roles_header">"Roller"</string>
   <string name="screen_room_roles_and_permissions_room_details">"Rumsdetaljer"</string>
   <string name="screen_room_roles_and_permissions_title">"Roller och behörigheter"</string>
+  <string name="screen_roomlist_mark_as_read">"Markera som läst"</string>
+  <string name="screen_roomlist_mark_as_unread">"Markera som oläst"</string>
   <string name="screen_security_and_privacy_add_room_address_action">"Lägg till adress"</string>
   <string name="screen_security_and_privacy_ask_to_join_option_description">"Alla måste begära åtkomst."</string>
   <string name="screen_security_and_privacy_ask_to_join_option_title">"Be om att gå med"</string>

@@ -55,7 +55,7 @@ fun HomeSpacesView(
     onExploreClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (state.canCreateSpaces && state.spaceRooms.isEmpty()) {
+    if (state.spaceRooms.isEmpty()) {
         EmptySpaceHomeView(
             modifier = modifier.padding(contentPadding),
             onCreateSpaceClick = onCreateSpaceClick,
@@ -171,7 +171,7 @@ private fun EmptySpaceHomeView(
 @PreviewsDayNight
 @Composable
 internal fun HomeSpacesViewPreview(
-    @PreviewParameter(HomeSpacesStateProvider::class) state: HomeSpacesState,
+    @PreviewParameter(HomeSpacesStatePreviewParam::class) state: HomeSpacesState,
 ) = ElementPreview {
     HomeSpacesView(
         state = state,

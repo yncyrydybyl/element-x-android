@@ -17,8 +17,6 @@ import io.element.android.features.startchat.impl.userlist.FakeUserListPresenter
 import io.element.android.features.startchat.impl.userlist.FakeUserListPresenterFactory
 import io.element.android.features.startchat.impl.userlist.UserListDataStore
 import io.element.android.libraries.architecture.AsyncAction
-import io.element.android.libraries.featureflag.api.FeatureFlags
-import io.element.android.libraries.featureflag.test.FakeFeatureFlagService
 import io.element.android.libraries.matrix.api.core.RoomId
 import io.element.android.libraries.matrix.api.core.UserId
 import io.element.android.libraries.matrix.api.user.MatrixUser
@@ -55,7 +53,7 @@ class StartChatPresenterTest {
             assertThat(initialState.userListState.isSearchActive).isFalse()
             assertThat(initialState.userListState.isMultiSelectionEnabled).isFalse()
             val matrixUser = MatrixUser(UserId("@name:domain"))
-            initialState.eventSink(StartChatEvents.StartDM(matrixUser))
+            initialState.eventSink(StartChatEvent.StartDM(matrixUser))
             awaitItem().also { state ->
                 assertThat(state.startDmAction).isEqualTo(startDMFailureResult)
                 executeResult.assertions().isCalledOnce().with(
@@ -63,7 +61,7 @@ class StartChatPresenterTest {
                     value(false),
                     any(),
                 )
-                state.eventSink(StartChatEvents.CancelStartDM)
+                state.eventSink(StartChatEvent.CancelStartDM)
             }
             awaitItem().also { state ->
                 assertThat(state.startDmAction.isUninitialized()).isTrue()
@@ -87,7 +85,7 @@ class StartChatPresenterTest {
             assertThat(initialState.userListState.isSearchActive).isFalse()
             assertThat(initialState.userListState.isMultiSelectionEnabled).isFalse()
             val matrixUser = MatrixUser(UserId("@name:domain"))
-            initialState.eventSink(StartChatEvents.StartDM(matrixUser))
+            initialState.eventSink(StartChatEvent.StartDM(matrixUser))
             awaitItem().also { state ->
                 assertThat(state.startDmAction).isEqualTo(startDMSuccessResult)
                 executeResult.assertions().isCalledOnce().with(
@@ -102,7 +100,7 @@ class StartChatPresenterTest {
     @Test
     fun `present - start DM action confirmation scenario - cancel`() = runTest {
         val matrixUser = MatrixUser(UserId("@name:domain"))
-        val startDMConfirmationResult = ConfirmingStartDmWithMatrixUser(matrixUser)
+        val startDMConfirmationResult = ConfirmingStartDmWithMatrixUser(matrixUser, isUserIdentityUnknown = false)
         val executeResult = lambdaRecorder<MatrixUser, Boolean, MutableState<AsyncAction<RoomId>>, Unit> { _, _, actionState ->
             actionState.value = startDMConfirmationResult
         }
@@ -111,7 +109,7 @@ class StartChatPresenterTest {
         presenter.test {
             val initialState = awaitItem()
             assertThat(initialState.startDmAction).isInstanceOf(AsyncAction.Uninitialized::class.java)
-            initialState.eventSink(StartChatEvents.StartDM(matrixUser))
+            initialState.eventSink(StartChatEvent.StartDM(matrixUser))
             val confirmingState = awaitItem()
             assertThat(confirmingState.startDmAction).isEqualTo(startDMConfirmationResult)
             executeResult.assertions().isCalledOnce().with(
@@ -120,7 +118,7 @@ class StartChatPresenterTest {
                 any(),
             )
             // Cancelling should not create the DM
-            confirmingState.eventSink(StartChatEvents.CancelStartDM)
+            confirmingState.eventSink(StartChatEvent.CancelStartDM)
             val finalState = awaitItem()
             assertThat(finalState.startDmAction.isUninitialized()).isTrue()
             executeResult.assertions().isCalledExactly(1)
@@ -130,7 +128,7 @@ class StartChatPresenterTest {
     @Test
     fun `present - start DM action confirmation scenario - confirm`() = runTest {
         val matrixUser = MatrixUser(UserId("@name:domain"))
-        val startDMConfirmationResult = ConfirmingStartDmWithMatrixUser(matrixUser)
+        val startDMConfirmationResult = ConfirmingStartDmWithMatrixUser(matrixUser, isUserIdentityUnknown = false)
         val executeResult = lambdaRecorder<MatrixUser, Boolean, MutableState<AsyncAction<RoomId>>, Unit> { _, _, actionState ->
             actionState.value = startDMConfirmationResult
         }
@@ -139,7 +137,7 @@ class StartChatPresenterTest {
         presenter.test {
             val initialState = awaitItem()
             assertThat(initialState.startDmAction).isInstanceOf(AsyncAction.Uninitialized::class.java)
-            initialState.eventSink(StartChatEvents.StartDM(matrixUser))
+            initialState.eventSink(StartChatEvent.StartDM(matrixUser))
             val confirmingState = awaitItem()
             assertThat(confirmingState.startDmAction).isEqualTo(startDMConfirmationResult)
             executeResult.assertions().isCalledOnce().with(
@@ -148,41 +146,23 @@ class StartChatPresenterTest {
                 any(),
             )
             // Start DM again should invoke the action with createIfDmDoesNotExist = true
-            confirmingState.eventSink(StartChatEvents.StartDM(matrixUser))
+            confirmingState.eventSink(StartChatEvent.StartDM(matrixUser))
             executeResult.assertions().isCalledExactly(2).withSequence(
                 listOf(value(matrixUser), value(false), any()),
                 listOf(value(matrixUser), value(true), any()),
             )
         }
     }
-
-    @Test
-    fun `present - room directory search`() = runTest {
-        val presenter = createStartChatPresenter(isRoomDirectorySearchEnabled = true)
-        presenter.test {
-            skipItems(1)
-            awaitItem().let { state ->
-                assertThat(state.isRoomDirectorySearchEnabled).isTrue()
-            }
-        }
-    }
 }
 
 internal fun createStartChatPresenter(
     startDMAction: StartDMAction = FakeStartDMAction(),
-    isRoomDirectorySearchEnabled: Boolean = false,
 ): StartChatPresenter {
-    val featureFlagService = FakeFeatureFlagService(
-        initialState = mapOf(
-            FeatureFlags.RoomDirectorySearch.key to isRoomDirectorySearchEnabled,
-        ),
-    )
     return StartChatPresenter(
         presenterFactory = FakeUserListPresenterFactory(FakeUserListPresenter()),
         userRepository = FakeUserRepository(),
         userListDataStore = UserListDataStore(),
         startDMAction = startDMAction,
-        featureFlagService = featureFlagService,
         buildMeta = aBuildMeta(),
     )
 }

@@ -5,6 +5,7 @@
   <string name="screen_link_new_device_desktop_step3">"Scanner le code QR avec cet appareil"</string>
   <string name="screen_link_new_device_desktop_submit">"Prêt à scanner"</string>
   <string name="screen_link_new_device_desktop_title">"Ouvrir %1$s sur un ordinateur pour obtenir le code QR"</string>
+  <string name="screen_link_new_device_desktop_warning">"Ne scannez un code QR qu’après avoir suivi les étapes ci-dessus sur votre propre appareil. Ne scannez jamais un code envoyé par quelqu’un d’autre."</string>
   <string name="screen_link_new_device_enter_number_error_numbers_do_not_match">"Les nombres ne correspondent pas"</string>
   <string name="screen_link_new_device_enter_number_notice">"Saisissez le code à 2 chiffres"</string>
   <string name="screen_link_new_device_enter_number_subtitle">"Cela permettra de vérifier que la connexion à votre autre appareil est sécurisée."</string>
@@ -34,6 +35,8 @@
   <string name="screen_qr_code_login_connection_note_secure_state_list_item_2">"Si vous rencontrez le même problème, essayez un autre réseau wifi ou utilisez vos données mobiles au lieu du wifi"</string>
   <string name="screen_qr_code_login_connection_note_secure_state_list_item_3">"Si cela ne fonctionne pas, connectez-vous manuellement"</string>
   <string name="screen_qr_code_login_connection_note_secure_state_title">"La connexion n’est pas sécurisée"</string>
+  <string name="screen_qr_code_login_device_code_subtitle">"Il vous sera demandé de saisir les deux chiffres affichés sur cet appareil."</string>
+  <string name="screen_qr_code_login_device_code_title">"Saisissez le nombre ci-dessous sur votre autre appareil"</string>
   <string name="screen_qr_code_login_error_cancelled_subtitle">"La connexion a été annulée sur l’autre appareil."</string>
   <string name="screen_qr_code_login_error_cancelled_title">"Demande de connexion annulée"</string>
   <string name="screen_qr_code_login_error_declined_subtitle">"La connexion a été refusée sur l’autre appareil."</string>
@@ -52,4 +55,5 @@
   <string name="screen_qr_code_login_no_camera_permission_state_description">"Vous devez autoriser %1$s à utiliser la camera de votre appareil pour continuer."</string>
   <string name="screen_qr_code_login_no_camera_permission_state_title">"Autoriser l’usage de la caméra pour scanner le code QR"</string>
   <string name="screen_qr_code_login_unknown_error_description">"Une erreur inattendue s’est produite. Veuillez réessayer."</string>
+  <string name="screen_qr_code_login_verify_code_loading">"En attente de votre autre session"</string>
 </resources>
