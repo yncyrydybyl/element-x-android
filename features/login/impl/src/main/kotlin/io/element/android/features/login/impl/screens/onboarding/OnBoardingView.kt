@@ -73,6 +73,7 @@ fun OnBoardingView(
     onLearnMoreClick: () -> Unit,
     onCreateAccountContinue: (url: String) -> Unit,
     onReportProblem: () -> Unit,
+    onHowItWorksClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val loginView = @Composable {
@@ -103,6 +104,7 @@ fun OnBoardingView(
             onSignIn = onSignIn,
             onCreateAccount = onCreateAccount,
             onReportProblem = onReportProblem,
+            onHowItWorksClick = onHowItWorksClick,
         )
     }
 
@@ -271,6 +273,7 @@ private fun OnBoardingButtons(
     onSignIn: (mustChooseAccountProvider: Boolean) -> Unit,
     onCreateAccount: () -> Unit,
     onReportProblem: () -> Unit,
+    onHowItWorksClick: () -> Unit,
 ) {
     val isLoading by remember(state.loginModeState.loginMode) {
         derivedStateOf {
@@ -321,6 +324,13 @@ private fun OnBoardingButtons(
                 onClick = onCreateAccount,
                 modifier = Modifier
                     .fillMaxWidth()
+            )
+        }
+        if (state.isAddingAccount.not()) {
+            TextButton(
+                text = stringResource(id = R.string.screen_onboarding_how_it_works),
+                onClick = onHowItWorksClick,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
         if (state.isAddingAccount.not()) {

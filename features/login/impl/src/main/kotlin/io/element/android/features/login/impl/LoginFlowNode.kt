@@ -38,6 +38,7 @@ import io.element.android.features.login.impl.screens.chooseaccountprovider.Choo
 import io.element.android.features.login.impl.screens.classic.ClassicFlowNode
 import io.element.android.features.login.impl.screens.confirmaccountprovider.ConfirmAccountProviderNode
 import io.element.android.features.login.impl.screens.createaccount.CreateAccountNode
+import io.element.android.features.login.impl.screens.howitworks.HowItWorksNode
 import io.element.android.features.login.impl.screens.loginpassword.LoginPasswordNode
 import io.element.android.features.login.impl.screens.onboarding.OnBoardingNode
 import io.element.android.features.login.impl.screens.searchaccountprovider.SearchAccountProviderNode
@@ -117,6 +118,9 @@ class LoginFlowNode(
         ) : NavTarget
 
         @Parcelize
+        data object HowItWorks : NavTarget
+
+        @Parcelize
         data object QrCode : NavTarget
 
         @Parcelize
@@ -193,6 +197,10 @@ class LoginFlowNode(
                         backstack.push(NavTarget.QrCode)
                     }
 
+                    override fun navigateToHowItWorks() {
+                        backstack.push(NavTarget.HowItWorks)
+                    }
+
                     override fun navigateToBugReport() {
                         callback.navigateToBugReport()
                     }
@@ -240,6 +248,14 @@ class LoginFlowNode(
                     buildContext = buildContext,
                     callback = callback,
                 )
+            }
+            NavTarget.HowItWorks -> {
+                val callback = object : HowItWorksNode.Callback {
+                    override fun onDone() {
+                        backstack.pop()
+                    }
+                }
+                createNode<HowItWorksNode>(buildContext, listOf(callback))
             }
             NavTarget.ChooseAccountProvider -> {
                 val callback = object : ChooseAccountProviderNode.Callback {

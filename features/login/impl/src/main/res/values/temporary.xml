@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Copyright (c) 2026 Element Creations Ltd.
+  ~
+  ~ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial.
+  ~ Please see LICENSE files in the repository root for full details.
+  -->
+<resources>
+    <!-- Entry point on the onboarding screen -->
+    <string name="screen_onboarding_how_it_works">How does Matrix work?</string>
+
+    <!-- "How Matrix works" animated explainer -->
+    <string name="screen_explainer_title">How Matrix works</string>
+    <string name="screen_explainer_step1_title">The app in your hands</string>
+    <string name="screen_explainer_step1_message">Your app is just your window in. Like an email app, you can switch it or get a new phone — your conversations don’t live in the app.</string>
+    <string name="screen_explainer_step2_title">Your provider</string>
+    <string name="screen_explainer_step2_message">The app connects to your provider — your home on the network. You choose who runs it, like picking an email provider, or a regional one such as Datanauten in Berlin.</string>
+    <string name="screen_explainer_step3_title">Other people, other providers</string>
+    <string name="screen_explainer_step3_message">Everyone picks their own provider. Bob is on matrix.org, Carol on a regional server. No single company owns the network.</string>
+    <string name="screen_explainer_step4_title">One open network</string>
+    <string name="screen_explainer_step4_message">The providers talk to each other — this is called federation — just like email flows between different providers. Whoever you pick, you can reach everyone.</string>
+    <string name="screen_explainer_step5_title">Direct messages</string>
+    <string name="screen_explainer_step5_message">A message to Bob hops from your provider to his — sealed so only the two of you can read it — then arrives in his app.</string>
+    <string name="screen_explainer_step6_title">Groups and rooms</string>
+    <string name="screen_explainer_step6_message">A group room can hold people from many providers at once. Everyone keeps their own home; the conversation is shared across all of them.</string>
+    <string name="screen_explainer_replay">Replay</string>
+</resources>
