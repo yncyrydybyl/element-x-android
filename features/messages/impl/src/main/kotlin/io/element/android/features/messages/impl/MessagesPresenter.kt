@@ -222,6 +222,7 @@ class MessagesPresenter(
         val dmRoomMember by room.getDirectRoomMember(membersState)
         val roomMemberIdentityStateChanges = identityChangeState.roomMemberIdentityStateChanges
 
+        val isFoldableFeaturesEnabled by featureFlagService.isFeatureEnabledFlow(FeatureFlags.FoldableFeatures).collectAsState(initial = false)
         // The top bar should show a "history" icon if:
         //   * The room is encrypted, and:
         //   * The room's history_visibility allows future users to see content.
@@ -324,6 +325,9 @@ class MessagesPresenter(
             roomMemberModerationState = roomMemberModerationState,
             topBarSharedHistoryIcon = topBarSharedHistoryIcon,
             successorRoom = roomInfo.successorRoom,
+            isFoldableFeaturesEnabled = isFoldableFeaturesEnabled,
+            roomTopic = roomInfo.topic,
+            roomMemberCount = roomInfo.activeMembersCount,
             threads = Threads(
                 hasThreads = canOpenThreadList && threadsList.isNotEmpty(),
                 // TODO calculate this properly based on the thread list and the read state of each thread
