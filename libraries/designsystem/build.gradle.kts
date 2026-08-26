@@ -33,6 +33,7 @@ dependencies {
 
     implementation(libs.androidx.compose.material3.windowsizeclass)
     implementation(libs.androidx.compose.material3.adaptive)
+    implementation(libs.androidx.window)
     implementation(libs.coil.compose)
     implementation(libs.vanniktech.blurhash)
     implementation(projects.libraries.androidutils)

@@ -10,4 +10,6 @@
 <resources>
     <!-- Hint shown in the tabletop voice recording split view on foldable devices -->
     <string name="screen_room_voice_tabletop_hint_close_to_send">Close the fold to send</string>
+    <string name="screen_room_tabletop_video_placeholder_title">Video call in tabletop mode</string>
+    <string name="screen_room_tabletop_video_placeholder_subtitle">Fold your device flat to use the full screen</string>
 </resources>
