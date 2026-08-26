@@ -106,7 +106,7 @@ fun TabletopVoiceRecordingView(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    items(contextMessages, key = { it.identifier }) { item ->
+                    items(contextMessages, key = { it.identifier() }) { item ->
                         TabletopContextMessageRow(item)
                     }
                 }

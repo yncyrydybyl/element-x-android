@@ -12,4 +12,10 @@
     <string name="screen_room_voice_tabletop_hint_close_to_send">Close the fold to send</string>
     <string name="screen_room_tabletop_video_placeholder_title">Video call in tabletop mode</string>
     <string name="screen_room_tabletop_video_placeholder_subtitle">Fold your device flat to use the full screen</string>
+    <string name="screen_rear_camera_share_title">Rear camera selfie</string>
+    <string name="screen_rear_camera_share_subtitle">Use the main camera for your selfie and preview it on the cover screen</string>
+    <string name="screen_rear_camera_share_live_badge">LIVE</string>
+    <string name="a11y_rear_camera_share_cancel">Cancel rear camera selfie</string>
+    <string name="a11y_rear_camera_share_toggle_flash">Toggle flash</string>
+    <string name="a11y_rear_camera_share_capture">Take photo</string>
 </resources>

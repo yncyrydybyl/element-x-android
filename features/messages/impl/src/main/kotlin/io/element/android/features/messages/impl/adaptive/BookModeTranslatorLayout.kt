@@ -42,6 +42,7 @@ import io.element.android.features.messages.impl.timeline.model.TimelineItem
 import io.element.android.features.messages.impl.timeline.model.event.TimelineItemTextBasedContent
 import io.element.android.libraries.designsystem.components.avatar.Avatar
 import io.element.android.libraries.designsystem.components.avatar.AvatarSize
+import io.element.android.libraries.designsystem.components.avatar.AvatarType
 import io.element.android.libraries.designsystem.preview.ElementPreview
 import io.element.android.libraries.designsystem.preview.PreviewsDayNight
 import io.element.android.libraries.designsystem.theme.components.Surface
@@ -334,7 +335,7 @@ private fun TranslatorChatBubble(
     ) {
         if (!isMine) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Avatar(avatarData = avatarData.copy(size = AvatarSize.TimelineSender))
+                Avatar(avatarData = avatarData.copy(size = AvatarSize.TimelineSender), avatarType = AvatarType.User)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = senderName,
