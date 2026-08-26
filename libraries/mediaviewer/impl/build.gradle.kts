@@ -29,6 +29,7 @@ dependencies {
     implementation(libs.matrix.richtexteditor)
     implementation(projects.libraries.textcomposer.impl)
     implementation(libs.coroutines.core)
+    implementation(libs.androidx.window)
     implementation(libs.coil.compose)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.exoplayer.midi)

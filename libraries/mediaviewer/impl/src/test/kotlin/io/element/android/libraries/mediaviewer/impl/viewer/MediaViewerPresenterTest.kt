@@ -30,6 +30,8 @@ import io.element.android.libraries.matrix.test.room.FakeBaseRoom
 import io.element.android.libraries.matrix.test.room.FakeJoinedRoom
 import io.element.android.libraries.matrix.test.room.powerlevels.FakeRoomPermissions
 import io.element.android.libraries.matrix.test.timeline.FakeTimeline
+import io.element.android.libraries.featureflag.api.FeatureFlagService
+import io.element.android.libraries.featureflag.test.FakeFeatureFlagService
 import io.element.android.libraries.matrix.ui.media.contentvalidation.NoopEventContentValidationCache
 import io.element.android.libraries.mediaviewer.api.AvatarInfo
 import io.element.android.libraries.mediaviewer.api.MediaViewerEntryPoint
@@ -951,6 +953,7 @@ internal fun TestScope.createMediaViewerPresenter(
     room: JoinedRoom = FakeJoinedRoom(
         liveTimeline = FakeTimeline(),
     ),
+    featureFlagService: FeatureFlagService = FakeFeatureFlagService(),
 ): MediaViewerPresenter {
     val actualInputs = inputs ?: createMediaViewerEntryPointParams(eventId = eventId, mode = mode)
     val actualMode = when (actualInputs) {
@@ -975,6 +978,7 @@ internal fun TestScope.createMediaViewerPresenter(
         ),
         room = room,
         localMediaActions = localMediaActions,
+        featureFlagService = featureFlagService,
     )
 }
 

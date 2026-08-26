@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import dev.zacsweers.metro.Assisted
@@ -28,6 +29,8 @@ import io.element.android.libraries.architecture.Presenter
 import io.element.android.libraries.designsystem.utils.snackbar.SnackbarDispatcher
 import io.element.android.libraries.designsystem.utils.snackbar.SnackbarMessage
 import io.element.android.libraries.designsystem.utils.snackbar.collectSnackbarMessageAsState
+import io.element.android.libraries.featureflag.api.FeatureFlagService
+import io.element.android.libraries.featureflag.api.FeatureFlags
 import io.element.android.libraries.matrix.api.core.EventId
 import io.element.android.libraries.matrix.api.room.JoinedRoom
 import io.element.android.libraries.matrix.api.room.powerlevels.permissionsAsState
@@ -56,6 +59,7 @@ class MediaViewerPresenter(
     @Assisted private val dataSource: MediaViewerDataSource,
     private val room: JoinedRoom,
     private val localMediaActions: LocalMediaActions,
+    private val featureFlagService: FeatureFlagService,
 ) : Presenter<MediaViewerState> {
     @AssistedFactory
     fun interface Factory {
@@ -101,6 +105,9 @@ class MediaViewerPresenter(
         }
 
         val snackbarMessage by snackbarDispatcher.collectSnackbarMessageAsState()
+        val isFoldableFeaturesEnabled by featureFlagService
+            .isFeatureEnabledFlow(FeatureFlags.FoldableFeatures)
+            .collectAsState(initial = false)
 
         // Add both forward and backward pagination state checks to display a snackbar when there is no more items to load in either direction
         NoMoreItemsSnackBarDisplayer(currentIndex, data, Timeline.PaginationDirection.FORWARDS)
@@ -204,6 +211,7 @@ class MediaViewerPresenter(
             currentIndex = currentIndex.intValue,
             snackbarMessage = snackbarMessage,
             canShowInfo = inputs !is MediaViewerEntryPoint.Params.Avatar,
+            isFoldableFeaturesEnabled = isFoldableFeaturesEnabled,
             mediaBottomSheetState = mediaBottomSheetState,
             eventSink = ::handleEvent,
         )
