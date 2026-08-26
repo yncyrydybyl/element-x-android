@@ -38,6 +38,8 @@ import io.element.android.libraries.matrix.ui.messages.reply.map
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 
+private const val GROUPING_TIMEOUT_MS = 5 * 60 * 1000L
+
 @AssistedInject
 class TimelineItemEventFactory(
     @Assisted private val config: TimelineItemsFactoryConfig,
@@ -57,6 +59,7 @@ class TimelineItemEventFactory(
         index: Int,
         timelineItems: List<MatrixTimelineItem>,
         roomMembers: List<RoomMember>,
+        renderReadReceipts: Boolean,
     ): TimelineItem.Event {
         val currentSender = currentTimelineItem.event.sender
         val groupPosition =
@@ -107,7 +110,7 @@ class TimelineItemEventFactory(
             senderId = currentSender,
             senderProfile = senderProfile,
             senderAvatar = senderAvatarData,
-            content = contentFactory.create(currentTimelineItem.event),
+            content = contentFactory.create(currentTimelineItem.event, roomMembers),
             isMine = currentTimelineItem.event.isOwn,
             isEditable = currentTimelineItem.event.isEditable,
             canBeRepliedTo = currentTimelineItem.event.canBeRepliedTo,
@@ -116,7 +119,7 @@ class TimelineItemEventFactory(
             sentDate = sentDate,
             groupPosition = groupPosition,
             reactionsState = currentTimelineItem.computeReactionsState(),
-            readReceiptState = currentTimelineItem.computeReadReceiptState(roomMembers),
+            readReceiptState = currentTimelineItem.computeReadReceiptState(roomMembers, renderReadReceipts),
             localSendState = currentTimelineItem.event.localSendState,
             inReplyTo = currentTimelineItem.event.inReplyTo()?.map(permalinkParser = permalinkParser),
             threadInfo = mappedThreadInfo,
@@ -133,9 +136,10 @@ class TimelineItemEventFactory(
         timelineItem: TimelineItem.Event,
         receivedMatrixTimelineItem: MatrixTimelineItem.Event,
         roomMembers: List<RoomMember>,
+        renderReadReceipts: Boolean,
     ): TimelineItem.Event {
         return timelineItem.copy(
-            readReceiptState = receivedMatrixTimelineItem.computeReadReceiptState(roomMembers)
+            readReceiptState = receivedMatrixTimelineItem.computeReadReceiptState(roomMembers, renderReadReceipts)
         )
     }
 
@@ -180,8 +184,9 @@ class TimelineItemEventFactory(
 
     private fun MatrixTimelineItem.Event.computeReadReceiptState(
         roomMembers: List<RoomMember>,
+        renderReadReceipts: Boolean,
     ): TimelineItemReadReceipts {
-        if (!config.computeReadReceipts) {
+        if (!config.computeReadReceipts || !renderReadReceipts) {
             return TimelineItemReadReceipts(receipts = persistentListOf())
         }
         return TimelineItemReadReceipts(
@@ -218,8 +223,14 @@ class TimelineItemEventFactory(
         val previousSender = prevTimelineItem?.event?.sender
         val nextSender = nextTimelineItem?.event?.sender
 
-        val previousIsGroupable = prevTimelineItem?.canBeDisplayedInBubbleBlock().orTrue()
-        val nextIsGroupable = nextTimelineItem?.canBeDisplayedInBubbleBlock().orTrue()
+        val previousIsGroupable = prevTimelineItem?.let {
+            it.canBeDisplayedInBubbleBlock() &&
+                currentTimelineItem.event.timestamp - it.event.timestamp <= GROUPING_TIMEOUT_MS
+        }.orTrue()
+        val nextIsGroupable = nextTimelineItem?.let {
+            it.canBeDisplayedInBubbleBlock() &&
+                it.event.timestamp - currentTimelineItem.event.timestamp <= GROUPING_TIMEOUT_MS
+        }.orTrue()
 
         return when {
             previousSender != currentSender && nextSender == currentSender -> {

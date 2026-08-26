@@ -88,7 +88,7 @@ fun MediaAudioView(
     modifier: Modifier = Modifier,
     isDisplayed: Boolean = true,
 ) {
-    val exoPlayer = rememberExoPlayer()
+    val exoPlayer = rememberExoPlayer(forAudioOnly = true)
     ExoPlayerMediaAudioView(
         isDisplayed = isDisplayed,
         localMediaViewState = localMediaViewState,
@@ -393,7 +393,7 @@ private fun AudioInfoView(
 @PreviewsDayNight
 @Composable
 internal fun MediaAudioViewPreview(
-    @PreviewParameter(MediaInfoAudioProvider::class) info: MediaInfo
+    @PreviewParameter(MediaInfoAudioPreviewParam::class) info: MediaInfo
 ) = ElementPreview {
     MediaAudioView(
         modifier = Modifier.fillMaxSize(),

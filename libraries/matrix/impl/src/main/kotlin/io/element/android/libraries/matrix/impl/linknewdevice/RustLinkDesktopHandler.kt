@@ -54,6 +54,8 @@ class RustLinkDesktopHandler(
                     }
                 }
             )
+            // We emit Done in case the progress listener was deallocated before scan() sent the Done
+            _linkDesktopStep.emit(LinkDesktopStep.Done)
         } catch (e: QrCodeDecodeException) {
             Timber.tag(tag.value).w(e, "Invalid QR code scanned")
             _linkDesktopStep.emit(
@@ -73,6 +75,10 @@ class RustLinkDesktopHandler(
         GrantQrLoginProgress.SyncingSecrets -> LinkDesktopStep.SyncingSecrets
         is GrantQrLoginProgress.WaitingForAuth -> LinkDesktopStep.WaitingForAuth(
             verificationUri = verificationUri,
+            continuationMessageSender = RustContinuationMessageSender(
+                inner = continuationSender,
+                sessionDispatcher = sessionDispatcher,
+            )
         )
         is GrantQrLoginProgress.EstablishingSecureChannel -> LinkDesktopStep.EstablishingSecureChannel(
             checkCode = checkCode,

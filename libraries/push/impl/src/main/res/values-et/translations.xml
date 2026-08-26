@@ -19,7 +19,8 @@
     <item quantity="one">"Sul on %d uus sõnum."</item>
     <item quantity="other">"Sul on %d uut sõnumit."</item>
   </plurals>
-  <string name="notification_incoming_call">"📹 Sissetulev kõne"</string>
+  <string name="notification_incoming_audio_call">"📞 Saabuv kõne"</string>
+  <string name="notification_incoming_call">"📹 Saabuv kõne"</string>
   <string name="notification_inline_reply_failed">"** Saatmine ei õnnestunud - palun ava jututoa täisvaade"</string>
   <string name="notification_invitation_action_join">"Liitu"</string>
   <string name="notification_invitation_action_reject">"Keeldu"</string>
@@ -29,6 +30,7 @@
   </plurals>
   <string name="notification_invite_body">"Kutse osalema vestluses"</string>
   <string name="notification_invite_body_with_sender">"%1$s saatus sulle vestluskutse"</string>
+  <string name="notification_live_location_started_body">"Hakkas jagama oma asukohta reaalajas"</string>
   <string name="notification_mentioned_you_body">"Mainis sind: %1$s"</string>
   <string name="notification_new_messages">"Uued sõnumid"</string>
   <plurals name="notification_new_messages_for_room">
