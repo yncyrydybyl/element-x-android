@@ -42,7 +42,7 @@ import io.element.android.features.home.impl.filters.selection.FilterSelectionSt
 import io.element.android.features.home.impl.model.RoomListRoomSummary
 import io.element.android.features.home.impl.model.RoomSummaryDisplayType
 import io.element.android.features.home.impl.roomlist.RoomListContentState
-import io.element.android.features.home.impl.roomlist.RoomListContentStateProvider
+import io.element.android.features.home.impl.roomlist.RoomListContentStatePreviewParam
 import io.element.android.features.home.impl.roomlist.RoomListEvent
 import io.element.android.features.home.impl.roomlist.SecurityBannerState
 import io.element.android.features.home.impl.spacefilters.SpaceFiltersState
@@ -245,19 +245,25 @@ private fun RoomsViewList(
                     )
                 }
             }
-            SecurityBannerState.None -> if (state.fullScreenIntentPermissionsState.shouldDisplayBanner) {
-                item {
-                    FullScreenIntentPermissionBanner(state = state.fullScreenIntentPermissionsState)
+            // Banner precedence (top-to-bottom): full-screen-intent > battery-optimization >
+            // new-notification-sound > sound-unavailable. At most one renders at a time.
+            SecurityBannerState.None -> when {
+                state.fullScreenIntentPermissionsState.shouldDisplayBanner -> {
+                    item {
+                        FullScreenIntentPermissionBanner(state = state.fullScreenIntentPermissionsState)
+                    }
                 }
-            } else if (state.batteryOptimizationState.shouldDisplayBanner) {
-                item {
-                    BatteryOptimizationBanner(state = state.batteryOptimizationState)
+                state.batteryOptimizationState.shouldDisplayBanner -> {
+                    item {
+                        BatteryOptimizationBanner(state = state.batteryOptimizationState)
+                    }
                 }
-            } else if (state.showNewNotificationSoundBanner) {
-                item {
-                    NewNotificationSoundBanner(
-                        onDismissClick = { eventSink(RoomListEvent.DismissNewNotificationSoundBanner) },
-                    )
+                state.showNewNotificationSoundBanner -> {
+                    item {
+                        NewNotificationSoundBanner(
+                            onDismissClick = { eventSink(RoomListEvent.DismissNewNotificationSoundBanner) },
+                        )
+                    }
                 }
             }
         }
@@ -273,6 +279,7 @@ private fun RoomsViewList(
                 hideInviteAvatars = hideInvitesAvatars,
                 isInviteSeen = room.displayType == RoomSummaryDisplayType.INVITE &&
                     state.seenRoomInvites.contains(room.roomId),
+                showUnreadCount = state.showUnreadCount,
                 onClick = onRoomClick,
                 eventSink = eventSink,
             )
@@ -329,7 +336,7 @@ private fun EmptyScaffold(
 
 @PreviewsDayNight
 @Composable
-internal fun RoomListContentViewPreview(@PreviewParameter(RoomListContentStateProvider::class) state: RoomListContentState) = ElementPreview {
+internal fun RoomListContentViewPreview(@PreviewParameter(RoomListContentStatePreviewParam::class) state: RoomListContentState) = ElementPreview {
     RoomListContentView(
         contentState = state,
         filtersState = aRoomListFiltersState(

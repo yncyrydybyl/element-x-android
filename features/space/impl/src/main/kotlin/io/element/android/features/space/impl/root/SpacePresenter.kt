@@ -22,21 +22,20 @@ import androidx.compose.runtime.setValue
 import dev.zacsweers.metro.Inject
 import im.vector.app.features.analytics.plan.JoinedRoom.Trigger
 import io.element.android.features.invite.api.SeenInvitesStore
-import io.element.android.features.invite.api.acceptdecline.AcceptDeclineInviteEvents
+import io.element.android.features.invite.api.acceptdecline.AcceptDeclineInviteEvent
 import io.element.android.features.invite.api.acceptdecline.AcceptDeclineInviteState
 import io.element.android.features.invite.api.toInviteData
 import io.element.android.libraries.architecture.AsyncAction
 import io.element.android.libraries.architecture.Presenter
 import io.element.android.libraries.core.coroutine.mapState
 import io.element.android.libraries.di.annotations.SessionCoroutineScope
-import io.element.android.libraries.featureflag.api.FeatureFlagService
-import io.element.android.libraries.featureflag.api.FeatureFlags
 import io.element.android.libraries.matrix.api.MatrixClient
 import io.element.android.libraries.matrix.api.core.RoomId
 import io.element.android.libraries.matrix.api.core.toRoomIdOrAlias
 import io.element.android.libraries.matrix.api.room.BaseRoom
 import io.element.android.libraries.matrix.api.room.CurrentUserMembership
 import io.element.android.libraries.matrix.api.room.join.JoinRoom
+import io.element.android.libraries.matrix.api.room.join.JoinRule
 import io.element.android.libraries.matrix.api.room.powerlevels.permissionsAsState
 import io.element.android.libraries.matrix.api.spaces.SpaceRoom
 import io.element.android.libraries.matrix.api.spaces.SpaceRoomList
@@ -66,7 +65,6 @@ class SpacePresenter(
     private val joinRoom: JoinRoom,
     private val acceptDeclineInvitePresenter: Presenter<AcceptDeclineInviteState>,
     @SessionCoroutineScope private val sessionCoroutineScope: CoroutineScope,
-    private val featureFlagService: FeatureFlagService,
     private val spaceService: SpaceService,
 ) : Presenter<SpaceState> {
     private var children by mutableStateOf<ImmutableList<SpaceRoom>>(persistentListOf())
@@ -99,16 +97,13 @@ class SpacePresenter(
         val permissions by room.permissionsAsState(SpacePermissions.DEFAULT) { perms ->
             perms.spacePermissions()
         }
-        val isSpaceSettingsEnabled by remember {
-            featureFlagService.isFeatureEnabledFlow(FeatureFlags.SpaceSettings)
-        }.collectAsState(false)
 
         val roomInfo by room.roomInfoFlow.collectAsState()
         val canAccessSpaceSettings by remember {
-            derivedStateOf { isSpaceSettingsEnabled && permissions.settingsPermissions.hasAny(roomInfo.joinRule) }
+            derivedStateOf { permissions.settingsPermissions.hasAny(roomInfo.joinRule) }
         }
         val canEditSpaceGraph by remember {
-            derivedStateOf { isSpaceSettingsEnabled && permissions.canEditSpaceGraph }
+            derivedStateOf { permissions.canEditSpaceGraph }
         }
         val (joinActions, setJoinActions) = remember { mutableStateOf(emptyMap<RoomId, AsyncAction<Unit>>()) }
 
@@ -123,12 +118,14 @@ class SpacePresenter(
 
         val filteredChildren by remember {
             derivedStateOf {
-                val notRemoved = children.filterNot { it.roomId in removedRoomIds }
+                val visibleChildren = children
+                    .filterNot { it.roomId in removedRoomIds }
+                    .filterNot { it.cannotBeRejoined() }
                 if (isManageMode) {
                     // In manage mode, only show rooms (not spaces)
-                    notRemoved.filter { !it.isSpace }.toImmutableList()
+                    visibleChildren.filter { !it.isSpace }.toImmutableList()
                 } else {
-                    notRemoved.toImmutableList()
+                    visibleChildren.toImmutableList()
                 }
             }
         }
@@ -153,51 +150,51 @@ class SpacePresenter(
             }
         }
 
-        fun handleEvent(event: SpaceEvents) {
+        fun handleEvent(event: SpaceEvent) {
             when (event) {
                 // SpaceRoomList is loaded automatically as backend is really slow. Event is kept for future.
-                SpaceEvents.LoadMore -> Unit
-                is SpaceEvents.Join -> {
+                SpaceEvent.LoadMore -> Unit
+                is SpaceEvent.Join -> {
                     sessionCoroutineScope.joinRoom(event.spaceRoom, joinActions, setJoinActions)
                 }
-                SpaceEvents.ClearFailures -> {
+                SpaceEvent.ClearFailures -> {
                     val failedActions = joinActions
                         .filterValues { it is AsyncAction.Failure }
                         .mapValues { AsyncAction.Uninitialized }
                     setJoinActions(joinActions + failedActions)
                 }
-                is SpaceEvents.AcceptInvite -> {
+                is SpaceEvent.AcceptInvite -> {
                     acceptDeclineInviteState.eventSink(
-                        AcceptDeclineInviteEvents.AcceptInvite(event.spaceRoom.toInviteData())
+                        AcceptDeclineInviteEvent.AcceptInvite(event.spaceRoom.toInviteData())
                     )
                 }
-                is SpaceEvents.DeclineInvite -> {
+                is SpaceEvent.DeclineInvite -> {
                     acceptDeclineInviteState.eventSink(
-                        AcceptDeclineInviteEvents.DeclineInvite(invite = event.spaceRoom.toInviteData(), shouldConfirm = true, blockUser = false)
+                        AcceptDeclineInviteEvent.DeclineInvite(invite = event.spaceRoom.toInviteData(), shouldConfirm = true, blockUser = false)
                     )
                 }
-                SpaceEvents.HideTopicViewer -> topicViewerState = TopicViewerState.Hidden
-                is SpaceEvents.ShowTopicViewer -> topicViewerState = TopicViewerState.Shown(event.topic)
+                SpaceEvent.HideTopicViewer -> topicViewerState = TopicViewerState.Hidden
+                is SpaceEvent.ShowTopicViewer -> topicViewerState = TopicViewerState.Shown(event.topic)
 
                 // Manage mode events
-                SpaceEvents.EnterManageMode -> {
+                SpaceEvent.EnterManageMode -> {
                     isManageMode = true
                     selectedRoomIds = emptySet()
                 }
-                SpaceEvents.ExitManageMode -> {
+                SpaceEvent.ExitManageMode -> {
                     localCoroutineScope.launch { exitManageMode(shouldReset = removedRoomIds.isNotEmpty()) }
                 }
-                is SpaceEvents.ToggleRoomSelection -> {
+                is SpaceEvent.ToggleRoomSelection -> {
                     selectedRoomIds = if (event.roomId in selectedRoomIds) {
                         selectedRoomIds - event.roomId
                     } else {
                         selectedRoomIds + event.roomId
                     }
                 }
-                SpaceEvents.RemoveSelectedRooms -> {
+                SpaceEvent.RemoveSelectedRooms -> {
                     removeRoomsAction = AsyncAction.ConfirmingNoParams
                 }
-                SpaceEvents.ConfirmRoomRemoval -> {
+                SpaceEvent.ConfirmRoomRemoval -> {
                     localCoroutineScope.launch {
                         removeRoomsAction = AsyncAction.Loading
                         val spaceId = spaceRoomList.spaceId
@@ -222,7 +219,7 @@ class SpacePresenter(
                         }
                     }
                 }
-                SpaceEvents.ClearRemoveAction -> {
+                SpaceEvent.ClearRemoveAction -> {
                     removeRoomsAction = AsyncAction.Uninitialized
                 }
             }
@@ -259,4 +256,8 @@ class SpacePresenter(
             setJoinActions(joinActions + mapOf(spaceRoom.roomId to AsyncAction.Failure(it)))
         }
     }
+}
+
+private fun SpaceRoom.cannotBeRejoined(): Boolean {
+    return state == CurrentUserMembership.LEFT && joinRule == JoinRule.Invite
 }
