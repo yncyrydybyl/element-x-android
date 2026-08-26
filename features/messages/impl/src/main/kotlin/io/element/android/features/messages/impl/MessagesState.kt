@@ -59,6 +59,8 @@ data class MessagesState(
     /** Type of "shared history" icon to show in the top bar. */
     val topBarSharedHistoryIcon: SharedHistoryIcon,
     val successorRoom: SuccessorRoom?,
+    /** Whether the foldable device features (e.g. book mode dual-screen translator) are enabled. */
+    val isFoldableFeaturesEnabled: Boolean,
     val threads: Threads,
     val showLiveLocationShareBanner: Boolean,
     val eventSink: (MessagesEvent) -> Unit
