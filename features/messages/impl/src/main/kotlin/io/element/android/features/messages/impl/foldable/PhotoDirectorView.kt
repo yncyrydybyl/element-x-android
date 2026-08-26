@@ -44,8 +44,8 @@ import io.element.android.libraries.designsystem.preview.PreviewsDayNight
 import io.element.android.libraries.designsystem.theme.components.Text
 import io.element.android.libraries.designsystem.theme.components.TextField
 
-// Accent colors matching the yellow customization (#FFED00)
-private val AccentStart = Color(0xFFFFED00)
+// Accent colors matching the yellow customization (#A77AFF)
+private val AccentStart = Color(0xFFA77AFF)
 private val AccentEnd = Color(0xFFFFC107)
 
 @Composable

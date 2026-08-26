@@ -73,7 +73,7 @@ import io.element.android.libraries.ui.strings.CommonStrings
 
 // The yellow accent is shared across light & dark themes, so it (and the dark
 // content drawn on top of it) are defined as fixed colours here.
-private val Accent = Color(0xFFFFED00)
+private val Accent = Color(0xFFA77AFF)
 private val OnAccent = Color(0xFF1B1D22)
 
 private data class Beat(
