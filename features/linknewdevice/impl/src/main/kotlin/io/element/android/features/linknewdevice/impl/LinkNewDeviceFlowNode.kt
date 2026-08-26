@@ -13,8 +13,10 @@ import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
+import com.bumble.appyx.core.composable.PermanentChild
 import com.bumble.appyx.core.lifecycle.subscribe
 import com.bumble.appyx.core.modality.BuildContext
+import com.bumble.appyx.core.navigation.model.permanent.PermanentNavModel
 import com.bumble.appyx.core.node.Node
 import com.bumble.appyx.core.plugin.Plugin
 import com.bumble.appyx.navmodel.backstack.BackStack
@@ -26,14 +28,18 @@ import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedInject
 import io.element.android.annotations.ContributesNode
 import io.element.android.compound.theme.ElementTheme
+import io.element.android.features.enterprise.api.SessionEnterpriseService
 import io.element.android.features.linknewdevice.api.LinkNewDeviceEntryPoint
+import io.element.android.features.linknewdevice.impl.screens.confirmation.CodeConfirmationNode
 import io.element.android.features.linknewdevice.impl.screens.desktop.DesktopNoticeNode
 import io.element.android.features.linknewdevice.impl.screens.error.ErrorNode
 import io.element.android.features.linknewdevice.impl.screens.error.ErrorScreenType
 import io.element.android.features.linknewdevice.impl.screens.number.EnterNumberNode
 import io.element.android.features.linknewdevice.impl.screens.qrcode.ShowQrCodeNode
+import io.element.android.features.linknewdevice.impl.screens.root.LinkDeviceType
 import io.element.android.features.linknewdevice.impl.screens.root.LinkNewDeviceRootNode
 import io.element.android.features.linknewdevice.impl.screens.scan.ScanQrCodeNode
+import io.element.android.features.lockscreen.api.DeviceUnlockEntryPoint
 import io.element.android.libraries.androidutils.browser.openUrlInChromeCustomTab
 import io.element.android.libraries.architecture.BackstackView
 import io.element.android.libraries.architecture.BaseFlowNode
@@ -50,6 +56,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import timber.log.Timber
 
@@ -64,9 +71,15 @@ class LinkNewDeviceFlowNode(
     private val sessionCoroutineScope: CoroutineScope,
     private val linkNewMobileHandler: LinkNewMobileHandler,
     private val linkNewDesktopHandler: LinkNewDesktopHandler,
+    private val sessionEnterpriseService: SessionEnterpriseService,
+    private val deviceUnlockEntryPoint: DeviceUnlockEntryPoint,
 ) : BaseFlowNode<LinkNewDeviceFlowNode.NavTarget>(
     backstack = BackStack(
         initialElement = NavTarget.Root,
+        savedStateMap = buildContext.savedStateMap,
+    ),
+    permanentNavModel = PermanentNavModel(
+        navTargets = setOf(NavTarget.LockScreen),
         savedStateMap = buildContext.savedStateMap,
     ),
     buildContext = buildContext,
@@ -90,6 +103,7 @@ class LinkNewDeviceFlowNode(
                 @Suppress("AssignedValueIsNeverRead")
                 linkDesktopHandlerJob = observeLinkNewDesktopHandler()
             },
+            onResume = ::onResume,
             onDestroy = {
                 linkMobileHandlerJob?.cancel()
                 linkDesktopHandlerJob?.cancel()
@@ -108,6 +122,11 @@ class LinkNewDeviceFlowNode(
         ) : NavTarget
 
         @Parcelize
+        data class CodeConfirmation(
+            val code: String,
+        ) : NavTarget
+
+        @Parcelize
         data object MobileEnterNumber : NavTarget
 
         @Parcelize
@@ -115,6 +134,9 @@ class LinkNewDeviceFlowNode(
 
         @Parcelize
         data object DesktopScanQrCode : NavTarget
+
+        @Parcelize
+        data object LockScreen : NavTarget
 
         @Parcelize
         data class Error(
@@ -129,6 +151,9 @@ class LinkNewDeviceFlowNode(
                 Timber.tag(tag.value).d("step: ${linkMobileStep::class.java.simpleName}")
                 when (linkMobileStep) {
                     LinkMobileStep.Uninitialized -> Unit
+                    LinkMobileStep.CreatingQrCode -> {
+                        // This step is handled in LinkNewDeviceRootPresenter
+                    }
                     LinkMobileStep.Done -> {
                         callback.onDone()
                     }
@@ -136,8 +161,14 @@ class LinkNewDeviceFlowNode(
                         navigateToError(linkMobileStep.errorType)
                     }
                     is LinkMobileStep.QrReady -> {
-                        // The QrCode is ready, navigate to its display
-                        backstack.push(NavTarget.MobileShowQrCode(linkMobileStep.data))
+                        // The QrCode is ready, navigate to its display, if not already there
+                        val navTarget = backstack.elements.value.last().key.navTarget
+                        if (navTarget !is NavTarget.MobileShowQrCode) {
+                            backstack.push(NavTarget.MobileShowQrCode(linkMobileStep.data))
+                        }
+                    }
+                    LinkMobileStep.QrRotating -> {
+                        // This step is handled in ShowQrCodePresenter
                     }
                     is LinkMobileStep.QrScanned -> {
                         backstack.replace(NavTarget.MobileEnterNumber)
@@ -145,10 +176,7 @@ class LinkNewDeviceFlowNode(
                     LinkMobileStep.Starting -> {
                         // This step is not received at the moment, so do nothing
                     }
-                    LinkMobileStep.SyncingSecrets -> {
-                        // LinkMobileStep.Done is not received at the moment, so consider that the flow is done here
-                        callback.onDone()
-                    }
+                    LinkMobileStep.SyncingSecrets -> Unit
                     is LinkMobileStep.WaitingForAuth -> {
                         navigateToBrowser(linkMobileStep.verificationUri)
                     }
@@ -166,7 +194,9 @@ class LinkNewDeviceFlowNode(
                 is LinkDesktopStep.Error -> {
                     navigateToError(linkDesktopStep.errorType)
                 }
-                is LinkDesktopStep.EstablishingSecureChannel -> Unit
+                is LinkDesktopStep.EstablishingSecureChannel -> {
+                    backstack.push(NavTarget.CodeConfirmation(linkDesktopStep.checkCodeString))
+                }
                 is LinkDesktopStep.InvalidQrCode -> {
                     // This error will be handled by the ScanQrCodeNode
                 }
@@ -181,22 +211,34 @@ class LinkNewDeviceFlowNode(
             .launchIn(sessionCoroutineScope)
     }
 
+    private fun onResume() = sessionCoroutineScope.launch {
+        // Application is resumed, if the step is waiting for auth, send the confirmation
+        (linkNewMobileHandler.stepFlow.value as? LinkMobileStep.WaitingForAuth)?.let {
+            Timber.tag(tag.value).d("Resuming while waiting for auth on mobile, sending confirmation")
+            it.continuationMessageSender.confirm()
+        }
+        (linkNewDesktopHandler.stepFlow.value as? LinkDesktopStep.WaitingForAuth)?.let {
+            Timber.tag(tag.value).d("Resuming while waiting for auth on desktop, sending confirmation")
+            it.continuationMessageSender.confirm()
+        }
+    }
+
     private fun navigateToError(errorType: ErrorType) {
         // Map the error to an error screen
-        // TODO Update this mapping
         val error = when (errorType) {
-            is ErrorType.DeviceIdAlreadyInUse -> ErrorScreenType.UnknownError
-            is ErrorType.InvalidCheckCode -> ErrorScreenType.InsecureChannelDetected
-            is ErrorType.MissingSecretsBackup -> ErrorScreenType.UnknownError
-            is ErrorType.NotFound -> ErrorScreenType.Expired
-            is ErrorType.DeviceNotFound -> ErrorScreenType.UnknownError
-            is ErrorType.Unknown -> ErrorScreenType.UnknownError
-            is ErrorType.UnsupportedProtocol -> ErrorScreenType.UnknownError
-            is ErrorType.Cancelled -> ErrorScreenType.UnknownError
+            is ErrorType.InvalidCheckCode -> ErrorScreenType.Mismatch2Digits
+            is ErrorType.UnsupportedProtocol -> ErrorScreenType.ProtocolNotSupported
+            is ErrorType.Cancelled -> ErrorScreenType.Cancelled
             is ErrorType.ConnectionInsecure -> ErrorScreenType.InsecureChannelDetected
-            is ErrorType.Expired -> ErrorScreenType.Expired
-            is ErrorType.OtherDeviceAlreadySignedIn -> ErrorScreenType.UnknownError
+            is ErrorType.Expired,
+            is ErrorType.NotFound,
+            is ErrorType.DeviceNotFound -> ErrorScreenType.Expired
+            is ErrorType.OtherDeviceAlreadySignedIn -> ErrorScreenType.OtherDeviceAlreadySignedIn
+            // TODO check if we expect to hit this here or if it should be caught earlier on
             is ErrorType.UnsupportedQrCodeType -> ErrorScreenType.UnknownError
+            is ErrorType.MissingSecretsBackup,
+            is ErrorType.DeviceIdAlreadyInUse,
+            is ErrorType.Unknown -> ErrorScreenType.UnknownError
         }
         // It is OK to push on backstack, since when user leaves the error screen, a new root will be set,
         // or the whole flow will be popped.
@@ -211,20 +253,41 @@ class LinkNewDeviceFlowNode(
                         callback.onDone()
                     }
 
-                    override fun linkDesktopDevice() {
-                        linkNewDesktopHandler.reset()
-                        backstack.push(NavTarget.DesktopNotice)
+                    override fun onUnlockDevice(type: LinkDeviceType) {
+                        val callback = object : DeviceUnlockEntryPoint.Callback {
+                            override fun onCancel() = Unit
+                            override fun onUnlock() = when (type) {
+                                LinkDeviceType.Mobile -> {
+                                    linkNewMobileHandler.reset()
+                                    linkNewMobileHandler.createAndStartNewHandler()
+                                }
+                                LinkDeviceType.Desktop -> {
+                                    linkNewDesktopHandler.reset()
+                                    // Ensure unlock state does not last longer than the timeout for scanning the QR code, so start the timer after unlock
+                                    linkNewDesktopHandler.startTimer()
+                                    backstack.push(NavTarget.DesktopNotice)
+                                }
+                            }
+                        }
+                        deviceUnlockEntryPoint.requestUnlock(callback)
                     }
                 }
                 createNode<LinkNewDeviceRootNode>(buildContext, listOf(callback))
             }
+            is NavTarget.LockScreen -> {
+                deviceUnlockEntryPoint.createNode(this, buildContext)
+            }
             NavTarget.DesktopNotice -> {
                 val callback = object : DesktopNoticeNode.Callback {
                     override fun navigateBack() {
+                        // Stop the timer when the user leaves the screen (user will have to authenticate again)
+                        linkNewDesktopHandler.reset()
                         backstack.pop()
                     }
 
                     override fun navigateToQrCodeScanner() {
+                        // Start again the timer when the user enters the next screen (they clicked on "Ready to scan")
+                        linkNewDesktopHandler.startTimer()
                         backstack.push(NavTarget.DesktopScanQrCode)
                     }
                 }
@@ -233,6 +296,8 @@ class LinkNewDeviceFlowNode(
             NavTarget.DesktopScanQrCode -> {
                 val callback = object : ScanQrCodeNode.Callback {
                     override fun cancel() {
+                        // start again the timer when the user goes back to the DesktopNoticeNode
+                        linkNewDesktopHandler.startTimer()
                         backstack.pop()
                     }
                 }
@@ -249,6 +314,18 @@ class LinkNewDeviceFlowNode(
                     }
                 }
                 createNode<EnterNumberNode>(buildContext, listOf(callback))
+            }
+            is NavTarget.CodeConfirmation -> {
+                val callback = object : CodeConfirmationNode.Callback {
+                    override fun onCancel() {
+                        // Push error
+                        backstack.push(NavTarget.Error(ErrorScreenType.Cancelled))
+                    }
+                }
+                val inputs = CodeConfirmationNode.Inputs(
+                    code = navTarget.code,
+                )
+                createNode<CodeConfirmationNode>(buildContext, listOf(inputs, callback))
             }
             is NavTarget.MobileShowQrCode -> {
                 val callback = object : ShowQrCodeNode.Callback {
@@ -281,8 +358,12 @@ class LinkNewDeviceFlowNode(
         }
     }
 
-    private fun navigateToBrowser(url: String) {
-        activity?.openUrlInChromeCustomTab(null, darkTheme, url)
+    private suspend fun navigateToBrowser(url: String) {
+        activity?.openUrlInChromeCustomTab(
+            session = null,
+            darkTheme = darkTheme,
+            url = sessionEnterpriseService.tweakMasUrl(url),
+        )
     }
 
     @Composable
@@ -295,5 +376,6 @@ class LinkNewDeviceFlowNode(
             }
         }
         BackstackView()
+        PermanentChild(permanentNavModel = permanentNavModel, navTarget = NavTarget.LockScreen)
     }
 }

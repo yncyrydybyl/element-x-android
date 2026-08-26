@@ -70,7 +70,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 internal fun FoldAwareMediaWrapper(
     mediaInfo: MediaInfo,
     eventId: EventId?,
-    eventSink: (MediaViewerEvents) -> Unit,
+    eventSink: (MediaViewerEvent) -> Unit,
     data: MediaViewerPageData.MediaViewerData,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
@@ -122,7 +122,7 @@ internal fun FoldAwareMediaWrapper(
 private fun TabletopInfoPanel(
     mediaInfo: MediaInfo,
     eventId: EventId?,
-    eventSink: (MediaViewerEvents) -> Unit,
+    eventSink: (MediaViewerEvent) -> Unit,
     data: MediaViewerPageData.MediaViewerData,
     modifier: Modifier = Modifier,
 ) {
@@ -166,10 +166,10 @@ private fun TabletopInfoPanel(
             HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
             Spacer(Modifier.height(4.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                ActionBtn(CompoundIcons.ShareAndroid(), stringResource(CommonStrings.action_share)) { eventSink(MediaViewerEvents.Share(data)) }
-                ActionBtn(CompoundIcons.Forward(), stringResource(CommonStrings.action_forward)) { eventSink(MediaViewerEvents.Forward(eventId)) }
-                ActionBtn(CompoundIcons.Download(), stringResource(CommonStrings.action_save)) { eventSink(MediaViewerEvents.SaveOnDisk(data)) }
-                ActionBtn(CompoundIcons.Delete(), stringResource(CommonStrings.action_remove), Color(0xFFFF6B6B)) { eventSink(MediaViewerEvents.ConfirmDelete(eventId, data)) }
+                ActionBtn(CompoundIcons.ShareAndroid(), stringResource(CommonStrings.action_share)) { eventSink(MediaViewerEvent.Share(data)) }
+                ActionBtn(CompoundIcons.Forward(), stringResource(CommonStrings.action_forward)) { eventSink(MediaViewerEvent.Forward(eventId)) }
+                ActionBtn(CompoundIcons.Download(), stringResource(CommonStrings.action_save)) { eventSink(MediaViewerEvent.SaveOnDisk(data)) }
+                ActionBtn(CompoundIcons.Delete(), stringResource(CommonStrings.action_remove), Color(0xFFFF6B6B)) { eventSink(MediaViewerEvent.ConfirmDelete(eventId, data)) }
             }
         }
     }

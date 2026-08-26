@@ -30,13 +30,17 @@ import io.element.android.libraries.androidutils.system.copyToClipboard
 import io.element.android.libraries.androidutils.system.openUrlInExternalApp
 import io.element.android.libraries.architecture.callback
 import io.element.android.libraries.di.RoomScope
+import io.element.android.libraries.emoji.api.picker.EmojiPickerRenderer
 import io.element.android.libraries.matrix.api.core.EventId
+import io.element.android.libraries.matrix.api.core.ThreadId
 import io.element.android.libraries.matrix.api.core.UserId
 import io.element.android.libraries.matrix.api.permalink.PermalinkData
 import io.element.android.libraries.matrix.api.permalink.PermalinkParser
 import io.element.android.libraries.matrix.api.timeline.Timeline
 import io.element.android.libraries.matrix.api.timeline.item.TimelineItemDebugInfo
 import io.element.android.libraries.ui.strings.CommonStrings
+import io.element.android.libraries.ui.utils.a11y.hasExternalKeyboard
+import io.element.android.libraries.ui.utils.a11y.isTalkbackActive
 
 @ContributesNode(RoomScope::class)
 @AssistedInject
@@ -47,14 +51,17 @@ class PinnedMessagesListNode(
     actionListPresenterFactory: ActionListPresenter.Factory,
     private val timelineItemPresenterFactories: TimelineItemPresenterFactories,
     private val permalinkParser: PermalinkParser,
+    private val emojiPickerRenderer: EmojiPickerRenderer,
 ) : Node(buildContext, plugins = plugins), PinnedMessagesListNavigator {
     interface Callback : Plugin {
-        fun handleEventClick(event: TimelineItem.Event)
+        fun handleEventClick(event: TimelineItem.Event, canUseOverlay: Boolean)
+        fun handleGalleryItemClick(event: TimelineItem.Event, galleryItemIndex: Int, canUseOverlay: Boolean)
         fun navigateToRoomMemberDetails(userId: UserId)
         fun viewInTimeline(eventId: EventId)
         fun handlePermalinkClick(data: PermalinkData.RoomLink)
         fun navigateToEventDebugInfo(eventId: EventId?, debugInfo: TimelineItemDebugInfo)
         fun handleForwardEventClick(eventId: EventId)
+        fun navigateToThread(threadRootId: ThreadId)
     }
 
     private val callback: Callback = callback()
@@ -95,8 +102,13 @@ class PinnedMessagesListNode(
         callback.handleForwardEventClick(eventId)
     }
 
+    override fun navigateToThread(threadRootId: ThreadId) {
+        callback.navigateToThread(threadRootId)
+    }
+
     @Composable
     override fun View(modifier: Modifier) {
+        val canUseOverlay = !isTalkbackActive() && !hasExternalKeyboard()
         CompositionLocalProvider(
             LocalTimelineItemPresenterFactories provides timelineItemPresenterFactories,
         ) {
@@ -107,7 +119,12 @@ class PinnedMessagesListNode(
             PinnedMessagesListView(
                 state = state,
                 onBackClick = ::navigateUp,
-                onEventClick = callback::handleEventClick,
+                onEventClick = {
+                    callback.handleEventClick(it, canUseOverlay)
+                },
+                onGalleryItemClick = { event, index ->
+                    callback.handleGalleryItemClick(event, index, canUseOverlay)
+                },
                 onUserDataClick = { callback.navigateToRoomMemberDetails(it.userId) },
                 onLinkClick = { link -> onLinkClick(context, link.url) },
                 onLinkLongClick = {
@@ -119,6 +136,7 @@ class PinnedMessagesListNode(
                         toastMessage = toastMessage,
                     )
                 },
+                emojiPickerRenderer = emojiPickerRenderer,
                 modifier = modifier
             )
         }

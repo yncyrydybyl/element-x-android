@@ -26,22 +26,38 @@ import io.element.android.libraries.matrix.test.A_ROOM_ID
 import io.element.android.libraries.matrix.test.A_SESSION_ID
 import io.element.android.libraries.matrix.test.A_THREAD_ID
 import io.element.android.libraries.matrix.test.permalink.FakePermalinkParser
-import io.element.android.libraries.oidc.api.OidcAction
-import io.element.android.libraries.oidc.test.FakeOidcIntentResolver
+import io.element.android.libraries.oauth.api.OAuthAction
+import io.element.android.libraries.oauth.test.FakeOAuthIntentResolver
 import io.element.android.tests.testutils.lambda.lambdaError
+import io.element.android.tests.testutils.robolectric.RobolectricTest
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
-@RunWith(RobolectricTestRunner::class)
-class IntentResolverTest {
+class IntentResolverTest : RobolectricTest() {
     @Test
     fun `resolve launcher intent should return null`() {
         val sut = createIntentResolver()
         val intent = Intent(RuntimeEnvironment.getApplication(), Activity::class.java).apply {
             action = Intent.ACTION_MAIN
             addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+        val result = sut.resolve(intent)
+        assertThat(result).isNull()
+    }
+
+    @Test
+    fun `resolve intent replayed from the history should return null`() {
+        val sut = createIntentResolver(
+            deeplinkParserResult = DeeplinkData.Room(
+                sessionId = A_SESSION_ID,
+                roomId = A_ROOM_ID,
+                threadId = null,
+                eventId = null,
+            )
+        )
+        val intent = Intent(RuntimeEnvironment.getApplication(), Activity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            addFlags(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY)
         }
         val result = sut.resolve(intent)
         assertThat(result).isNull()
@@ -170,9 +186,9 @@ class IntentResolverTest {
     }
 
     @Test
-    fun `test resolve oidc`() {
+    fun `test resolve OAuth`() {
         val sut = createIntentResolver(
-            oidcIntentResolverResult = { OidcAction.GoBack() },
+            oAuthIntentResolverResult = { OAuthAction.GoBack() },
         )
         val intent = Intent(RuntimeEnvironment.getApplication(), Activity::class.java).apply {
             action = Intent.ACTION_VIEW
@@ -180,8 +196,8 @@ class IntentResolverTest {
         }
         val result = sut.resolve(intent)
         assertThat(result).isEqualTo(
-            ResolvedIntent.Oidc(
-                oidcAction = OidcAction.GoBack()
+            ResolvedIntent.OAuth(
+                oAuthAction = OAuthAction.GoBack()
             )
         )
     }
@@ -194,7 +210,7 @@ class IntentResolverTest {
         val sut = createIntentResolver(
             loginIntentResolverResult = { null },
             permalinkParserResult = { permalinkData },
-            oidcIntentResolverResult = { null },
+            oAuthIntentResolverResult = { null },
         )
         val intent = Intent(RuntimeEnvironment.getApplication(), Activity::class.java).apply {
             action = Intent.ACTION_VIEW
@@ -213,7 +229,7 @@ class IntentResolverTest {
         val sut = createIntentResolver(
             permalinkParserResult = { PermalinkData.FallbackLink(Uri.parse("https://matrix.org")) },
             loginIntentResolverResult = { null },
-            oidcIntentResolverResult = { null },
+            oAuthIntentResolverResult = { null },
         )
         val intent = Intent(RuntimeEnvironment.getApplication(), Activity::class.java).apply {
             action = Intent.ACTION_VIEW
@@ -230,7 +246,7 @@ class IntentResolverTest {
         )
         val sut = createIntentResolver(
             permalinkParserResult = { permalinkData },
-            oidcIntentResolverResult = { null },
+            oAuthIntentResolverResult = { null },
         )
         val intent = Intent(RuntimeEnvironment.getApplication(), Activity::class.java).apply {
             action = Intent.ACTION_BATTERY_LOW
@@ -244,7 +260,7 @@ class IntentResolverTest {
     fun `test incoming share simple`() {
         val shareIntentData = ShareIntentData.PlainText("Hello")
         val sut = createIntentResolver(
-            oidcIntentResolverResult = { null },
+            oAuthIntentResolverResult = { null },
             onIncomingShareIntent = { shareIntentData },
         )
         val intent = Intent(RuntimeEnvironment.getApplication(), Activity::class.java).apply {
@@ -260,7 +276,7 @@ class IntentResolverTest {
         val fileUri = "content://com.example.app/file1.jpg".toUri()
         val shareIntentData = ShareIntentData.Uris(text = "Hello", uris = listOf(UriToShare(fileUri, "image/jpg")))
         val sut = createIntentResolver(
-            oidcIntentResolverResult = { null },
+            oAuthIntentResolverResult = { null },
             onIncomingShareIntent = { shareIntentData },
         )
         val intent = Intent(RuntimeEnvironment.getApplication(), Activity::class.java).apply {
@@ -277,7 +293,7 @@ class IntentResolverTest {
         val sut = createIntentResolver(
             permalinkParserResult = { PermalinkData.FallbackLink(Uri.parse("https://matrix.org")) },
             loginIntentResolverResult = { null },
-            oidcIntentResolverResult = { null },
+            oAuthIntentResolverResult = { null },
         )
         val intent = Intent(RuntimeEnvironment.getApplication(), Activity::class.java).apply {
             action = Intent.ACTION_VIEW
@@ -292,7 +308,7 @@ class IntentResolverTest {
         val aLoginParams = LoginParams("accountProvider", null)
         val sut = createIntentResolver(
             loginIntentResolverResult = { aLoginParams },
-            oidcIntentResolverResult = { null },
+            oAuthIntentResolverResult = { null },
         )
         val intent = Intent(RuntimeEnvironment.getApplication(), Activity::class.java).apply {
             action = Intent.ACTION_VIEW
@@ -306,7 +322,7 @@ class IntentResolverTest {
         deeplinkParserResult: DeeplinkData? = null,
         permalinkParserResult: (String) -> PermalinkData = { lambdaError() },
         loginIntentResolverResult: (String) -> LoginParams? = { lambdaError() },
-        oidcIntentResolverResult: (Intent) -> OidcAction? = { lambdaError() },
+        oAuthIntentResolverResult: (Intent) -> OAuthAction? = { lambdaError() },
         onIncomingShareIntent: (Intent) -> ShareIntentData? = { null },
     ): IntentResolver {
         return IntentResolver(
@@ -314,8 +330,8 @@ class IntentResolverTest {
             loginIntentResolver = FakeLoginIntentResolver(
                 parseResult = loginIntentResolverResult,
             ),
-            oidcIntentResolver = FakeOidcIntentResolver(
-                resolveResult = oidcIntentResolverResult,
+            oAuthIntentResolver = FakeOAuthIntentResolver(
+                resolveResult = oAuthIntentResolverResult,
             ),
             permalinkParser = FakePermalinkParser(
                 result = permalinkParserResult

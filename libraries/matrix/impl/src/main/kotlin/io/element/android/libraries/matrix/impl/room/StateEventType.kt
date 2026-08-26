@@ -9,14 +9,14 @@
 package io.element.android.libraries.matrix.impl.room
 
 import io.element.android.libraries.matrix.api.room.StateEventType
-import org.matrix.rustcomponents.sdk.StateEventType as RustStateEventType
+import uniffi.ruma_events.stateEventTypeFromString
+import uniffi.ruma_events.StateEventType as RustStateEventType
 
 fun StateEventType.map(): RustStateEventType = when (this) {
     StateEventType.PolicyRuleRoom -> RustStateEventType.PolicyRuleRoom
     StateEventType.PolicyRuleServer -> RustStateEventType.PolicyRuleServer
     StateEventType.PolicyRuleUser -> RustStateEventType.PolicyRuleUser
     StateEventType.CallMember -> RustStateEventType.CallMember
-    StateEventType.RoomAliases -> RustStateEventType.RoomAliases
     StateEventType.RoomAvatar -> RustStateEventType.RoomAvatar
     StateEventType.RoomCanonicalAlias -> RustStateEventType.RoomCanonicalAlias
     StateEventType.RoomCreate -> RustStateEventType.RoomCreate
@@ -24,7 +24,7 @@ fun StateEventType.map(): RustStateEventType = when (this) {
     StateEventType.RoomGuestAccess -> RustStateEventType.RoomGuestAccess
     StateEventType.RoomHistoryVisibility -> RustStateEventType.RoomHistoryVisibility
     StateEventType.RoomJoinRules -> RustStateEventType.RoomJoinRules
-    StateEventType.RoomMemberEvent -> RustStateEventType.RoomMemberEvent
+    StateEventType.RoomMemberEvent -> RustStateEventType.RoomMember
     StateEventType.RoomName -> RustStateEventType.RoomName
     StateEventType.RoomPinnedEvents -> RustStateEventType.RoomPinnedEvents
     StateEventType.RoomPowerLevels -> RustStateEventType.RoomPowerLevels
@@ -38,7 +38,9 @@ fun StateEventType.map(): RustStateEventType = when (this) {
     StateEventType.MemberHints -> RustStateEventType.MemberHints
     StateEventType.RoomImagePack -> RustStateEventType.RoomImagePack
     StateEventType.RoomLanguage -> RustStateEventType.RoomLanguage
-    is StateEventType.Custom -> RustStateEventType.Custom(type)
+    StateEventType.RoomPolicy -> RustStateEventType.RoomPolicy
+    StateEventType.RoomRetention -> RustStateEventType.RoomRetention
+    is StateEventType.Custom -> stateEventTypeFromString(type)
 }
 
 fun RustStateEventType.map(): StateEventType = when (this) {
@@ -46,7 +48,6 @@ fun RustStateEventType.map(): StateEventType = when (this) {
     RustStateEventType.PolicyRuleServer -> StateEventType.PolicyRuleServer
     RustStateEventType.PolicyRuleUser -> StateEventType.PolicyRuleUser
     RustStateEventType.CallMember -> StateEventType.CallMember
-    RustStateEventType.RoomAliases -> StateEventType.RoomAliases
     RustStateEventType.RoomAvatar -> StateEventType.RoomAvatar
     RustStateEventType.RoomCanonicalAlias -> StateEventType.RoomCanonicalAlias
     RustStateEventType.RoomCreate -> StateEventType.RoomCreate
@@ -54,7 +55,7 @@ fun RustStateEventType.map(): StateEventType = when (this) {
     RustStateEventType.RoomGuestAccess -> StateEventType.RoomGuestAccess
     RustStateEventType.RoomHistoryVisibility -> StateEventType.RoomHistoryVisibility
     RustStateEventType.RoomJoinRules -> StateEventType.RoomJoinRules
-    RustStateEventType.RoomMemberEvent -> StateEventType.RoomMemberEvent
+    RustStateEventType.RoomMember -> StateEventType.RoomMemberEvent
     RustStateEventType.RoomName -> StateEventType.RoomName
     RustStateEventType.RoomPinnedEvents -> StateEventType.RoomPinnedEvents
     RustStateEventType.RoomPowerLevels -> StateEventType.RoomPowerLevels
@@ -68,5 +69,7 @@ fun RustStateEventType.map(): StateEventType = when (this) {
     RustStateEventType.MemberHints -> StateEventType.MemberHints
     RustStateEventType.RoomImagePack -> StateEventType.RoomImagePack
     RustStateEventType.RoomLanguage -> StateEventType.RoomLanguage
-    is RustStateEventType.Custom -> StateEventType.Custom(value)
+    RustStateEventType.RoomPolicy -> StateEventType.RoomPolicy
+    RustStateEventType.RoomRetention -> StateEventType.RoomRetention
+    is RustStateEventType.Custom -> StateEventType.Custom(this.toString())
 }

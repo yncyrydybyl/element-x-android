@@ -21,6 +21,7 @@ import io.element.android.libraries.matrix.api.timeline.Timeline
 import io.element.android.libraries.matrix.api.timeline.item.event.EventOrTransactionId
 import io.element.android.libraries.matrix.api.timeline.item.event.toEventOrTransactionId
 import io.element.android.libraries.matrix.test.AN_EVENT_ID
+import io.element.android.libraries.matrix.test.AN_EVENT_ID_2
 import io.element.android.libraries.matrix.test.A_SESSION_ID_2
 import io.element.android.libraries.matrix.test.A_USER_ID
 import io.element.android.libraries.matrix.test.media.FakeMatrixMediaLoader
@@ -31,6 +32,8 @@ import io.element.android.libraries.matrix.test.room.powerlevels.FakeRoomPermiss
 import io.element.android.libraries.matrix.test.timeline.FakeTimeline
 import io.element.android.libraries.featureflag.api.FeatureFlagService
 import io.element.android.libraries.featureflag.test.FakeFeatureFlagService
+import io.element.android.libraries.matrix.ui.media.contentvalidation.NoopEventContentValidationCache
+import io.element.android.libraries.mediaviewer.api.AvatarInfo
 import io.element.android.libraries.mediaviewer.api.MediaViewerEntryPoint
 import io.element.android.libraries.mediaviewer.api.anApkMediaInfo
 import io.element.android.libraries.mediaviewer.api.local.LocalMediaFactory
@@ -53,6 +56,8 @@ import io.mockk.mockk
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -99,6 +104,8 @@ class MediaViewerPresenterTest {
             assertThat(initialState.snackbarMessage).isNull()
             assertThat(initialState.canShowInfo).isTrue()
             assertThat(initialState.mediaBottomSheetState).isEqualTo(MediaBottomSheetState.Hidden)
+
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -106,7 +113,12 @@ class MediaViewerPresenterTest {
     fun `present - initial state cannot show info`() = runTest {
         val presenter = createMediaViewerPresenter(
             localMediaFactory = localMediaFactory,
-            canShowInfo = false,
+            inputs = MediaViewerEntryPoint.Params.Avatar(
+                avatarInfo = AvatarInfo(filename = "avatar.png"),
+                mediaSource = aMediaSource(),
+                thumbnailSource = null,
+                blurHash = null,
+            ),
             room = FakeJoinedRoom(
                 baseRoom = FakeBaseRoom(
                     roomPermissions = FakeRoomPermissions(
@@ -122,6 +134,8 @@ class MediaViewerPresenterTest {
             assertThat(initialState.snackbarMessage).isNull()
             assertThat(initialState.canShowInfo).isFalse()
             assertThat(initialState.mediaBottomSheetState).isEqualTo(MediaBottomSheetState.Hidden)
+
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -145,6 +159,8 @@ class MediaViewerPresenterTest {
             assertThat(initialState.snackbarMessage).isNull()
             assertThat(initialState.canShowInfo).isTrue()
             assertThat(initialState.mediaBottomSheetState).isEqualTo(MediaBottomSheetState.Hidden)
+
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -169,6 +185,8 @@ class MediaViewerPresenterTest {
             assertThat(initialState.snackbarMessage).isNull()
             assertThat(initialState.canShowInfo).isTrue()
             assertThat(initialState.mediaBottomSheetState).isEqualTo(MediaBottomSheetState.Hidden)
+
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -228,7 +246,7 @@ class MediaViewerPresenterTest {
             )
             val updatedState = awaitItem()
             updatedState.eventSink(
-                MediaViewerEvents.LoadMedia(
+                MediaViewerEvent.LoadMedia(
                     aMediaViewerPageData(
                         mediaSource = MediaSource(aUrl)
                     )
@@ -268,16 +286,16 @@ class MediaViewerPresenterTest {
             )
             val updatedState = awaitItem()
             updatedState.eventSink(
-                MediaViewerEvents.OpenInfo(
+                MediaViewerEvent.OpenInfo(
                     aMediaViewerPageData(
                         mediaSource = MediaSource(aUrl)
                     )
                 )
             )
             val withInfoState = awaitItem()
-            assertThat(withInfoState.mediaBottomSheetState).isInstanceOf(MediaBottomSheetState.MediaDetailsBottomSheetState::class.java)
+            assertThat(withInfoState.mediaBottomSheetState).isInstanceOf(MediaBottomSheetState.Details::class.java)
             withInfoState.eventSink(
-                MediaViewerEvents.CloseBottomSheet
+                MediaViewerEvent.CloseBottomSheet
             )
             val finalState = awaitItem()
             assertThat(finalState.mediaBottomSheetState).isEqualTo(MediaBottomSheetState.Hidden)
@@ -308,7 +326,7 @@ class MediaViewerPresenterTest {
             )
             val updatedState = awaitItem()
             updatedState.eventSink(
-                MediaViewerEvents.ClearLoadingError(
+                MediaViewerEvent.ClearLoadingError(
                     aMediaViewerPageData(
                         mediaSource = MediaSource(aUrl)
                     )
@@ -341,7 +359,7 @@ class MediaViewerPresenterTest {
             )
             val updatedState = awaitItem()
             updatedState.eventSink(
-                MediaViewerEvents.Share(
+                MediaViewerEvent.Share(
                     aMediaViewerPageData(
                         mediaSource = MediaSource(aUrl)
                     )
@@ -374,7 +392,7 @@ class MediaViewerPresenterTest {
             )
             val updatedState = awaitItem()
             updatedState.eventSink(
-                MediaViewerEvents.SaveOnDisk(
+                MediaViewerEvent.SaveOnDisk(
                     aMediaViewerPageData(
                         mediaSource = MediaSource(aUrl)
                     )
@@ -407,7 +425,7 @@ class MediaViewerPresenterTest {
             )
             val updatedState = awaitItem()
             updatedState.eventSink(
-                MediaViewerEvents.OpenWith(
+                MediaViewerEvent.OpenWith(
                     aMediaViewerPageData(
                         mediaSource = MediaSource(aUrl)
                     )
@@ -440,7 +458,7 @@ class MediaViewerPresenterTest {
             )
             val updatedState = awaitItem()
             updatedState.eventSink(
-                MediaViewerEvents.ConfirmDelete(
+                MediaViewerEvent.ConfirmDelete(
                     eventId = AN_EVENT_ID,
                     data = aMediaViewerPageData(
                         mediaSource = MediaSource(aUrl)
@@ -448,9 +466,9 @@ class MediaViewerPresenterTest {
                 )
             )
             val withBottomSheetState = awaitItem()
-            assertThat(withBottomSheetState.mediaBottomSheetState).isInstanceOf(MediaBottomSheetState.MediaDeleteConfirmationState::class.java)
+            assertThat(withBottomSheetState.mediaBottomSheetState).isInstanceOf(MediaBottomSheetState.DeleteConfirmation::class.java)
             withBottomSheetState.eventSink(
-                MediaViewerEvents.CloseBottomSheet
+                MediaViewerEvent.CloseBottomSheet
             )
             val finalState = awaitItem()
             assertThat(finalState.mediaBottomSheetState).isEqualTo(MediaBottomSheetState.Hidden)
@@ -500,7 +518,7 @@ class MediaViewerPresenterTest {
             )
             val updatedState = awaitItem()
             updatedState.eventSink(
-                MediaViewerEvents.ConfirmDelete(
+                MediaViewerEvent.ConfirmDelete(
                     eventId = AN_EVENT_ID,
                     data = aMediaViewerPageData(
                         mediaSource = MediaSource(aUrl)
@@ -508,9 +526,9 @@ class MediaViewerPresenterTest {
                 )
             )
             val withBottomSheetState = awaitItem()
-            assertThat(withBottomSheetState.mediaBottomSheetState).isInstanceOf(MediaBottomSheetState.MediaDeleteConfirmationState::class.java)
+            assertThat(withBottomSheetState.mediaBottomSheetState).isInstanceOf(MediaBottomSheetState.DeleteConfirmation::class.java)
             updatedState.eventSink(
-                MediaViewerEvents.Delete(
+                MediaViewerEvent.Delete(
                     eventId = AN_EVENT_ID,
                 )
             )
@@ -553,10 +571,12 @@ class MediaViewerPresenterTest {
             )
             val updatedState = awaitItem()
             updatedState.eventSink(
-                MediaViewerEvents.OnNavigateTo(1)
+                MediaViewerEvent.OnNavigateTo(1)
             )
             val finalState = awaitItem()
             assertThat(finalState.currentIndex).isEqualTo(1)
+
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -580,35 +600,37 @@ class MediaViewerPresenterTest {
         mode: MediaViewerEntryPoint.MediaViewerMode,
         expectedSnackbarResId: Int,
     ) = runTest {
+        val image = anImage.copy(eventId = AN_EVENT_ID)
         val mediaGalleryDataSource = FakeMediaGalleryDataSource(
+            initialData = AsyncData.Success(
+                if (mode is MediaViewerEntryPoint.MediaViewerMode.TimelineFilesAndAudios) {
+                    GroupedMediaItems(
+                        imageAndVideoItems = persistentListOf(),
+                        fileItems = persistentListOf(aForwardLoadingIndicator, image, aBackwardLoadingIndicator),
+                    )
+                } else {
+                    GroupedMediaItems(
+                        imageAndVideoItems = persistentListOf(aForwardLoadingIndicator, image, aBackwardLoadingIndicator),
+                        fileItems = persistentListOf(),
+                    )
+                }
+            ),
             startLambda = { },
         )
         val presenter = createMediaViewerPresenter(
+            eventId = AN_EVENT_ID,
             localMediaFactory = localMediaFactory,
             mode = mode,
             mediaGalleryDataSource = mediaGalleryDataSource,
         )
         presenter.test {
-            awaitFirstItem()
-            mediaGalleryDataSource.emitGroupedMediaItems(
-                AsyncData.Success(
-                    if (mode is MediaViewerEntryPoint.MediaViewerMode.TimelineFilesAndAudios) {
-                        GroupedMediaItems(
-                            imageAndVideoItems = persistentListOf(),
-                            fileItems = persistentListOf(aForwardLoadingIndicator, anImage, aBackwardLoadingIndicator),
-                        )
-                    } else {
-                        GroupedMediaItems(
-                            imageAndVideoItems = persistentListOf(aForwardLoadingIndicator, anImage, aBackwardLoadingIndicator),
-                            fileItems = persistentListOf(),
-                        )
-                    }
-                )
-            )
-            val updatedState = awaitItem()
+            val updatedState = awaitFirstItem()
+
+            advanceUntilIdle()
+            runCurrent()
             // User navigate to the first item (forward loading indicator)
             updatedState.eventSink(
-                MediaViewerEvents.OnNavigateTo(0)
+                MediaViewerEvent.OnNavigateTo(0)
             )
             // data source claims that there is no more items to load forward
             mediaGalleryDataSource.emitGroupedMediaItems(
@@ -616,11 +638,11 @@ class MediaViewerPresenterTest {
                     if (mode is MediaViewerEntryPoint.MediaViewerMode.TimelineFilesAndAudios) {
                         GroupedMediaItems(
                             imageAndVideoItems = persistentListOf(),
-                            fileItems = persistentListOf(anImage, aBackwardLoadingIndicator),
+                            fileItems = persistentListOf(image, aBackwardLoadingIndicator),
                         )
                     } else {
                         GroupedMediaItems(
-                            imageAndVideoItems = persistentListOf(anImage, aBackwardLoadingIndicator),
+                            imageAndVideoItems = persistentListOf(image, aBackwardLoadingIndicator),
                             fileItems = persistentListOf(),
                         )
                     }
@@ -680,7 +702,7 @@ class MediaViewerPresenterTest {
             val updatedState = awaitItem()
             // User navigate to the last item (backward loading indicator)
             updatedState.eventSink(
-                MediaViewerEvents.OnNavigateTo(2)
+                MediaViewerEvent.OnNavigateTo(2)
             )
             skipItems(1)
             // data source claims that there is no more items to load backward
@@ -709,25 +731,23 @@ class MediaViewerPresenterTest {
     fun `present - no snackbar displayed when there is no more items but not displaying a loading item`() = runTest {
         val mediaGalleryDataSource = FakeMediaGalleryDataSource(
             startLambda = { },
+            initialData = AsyncData.Success(
+                GroupedMediaItems(
+                    imageAndVideoItems = persistentListOf(aForwardLoadingIndicator, anImage, anImage.copy(eventId = AN_EVENT_ID_2), aBackwardLoadingIndicator),
+                    fileItems = persistentListOf(),
+                )
+            )
         )
         val presenter = createMediaViewerPresenter(
+            eventId = AN_EVENT_ID,
             localMediaFactory = localMediaFactory,
             mediaGalleryDataSource = mediaGalleryDataSource,
         )
         presenter.test {
-            awaitFirstItem()
-            mediaGalleryDataSource.emitGroupedMediaItems(
-                AsyncData.Success(
-                    GroupedMediaItems(
-                        imageAndVideoItems = persistentListOf(aForwardLoadingIndicator, anImage, aBackwardLoadingIndicator),
-                        fileItems = persistentListOf(),
-                    )
-                )
-            )
             val updatedState = awaitItem()
             // User navigate to the media
             updatedState.eventSink(
-                MediaViewerEvents.OnNavigateTo(1)
+                MediaViewerEvent.OnNavigateTo(1)
             )
             skipItems(1)
             // data source claims that there is no more items to load at all
@@ -770,9 +790,54 @@ class MediaViewerPresenterTest {
             )
             val updatedState = awaitItem()
             updatedState.eventSink(
-                MediaViewerEvents.LoadMore(Timeline.PaginationDirection.BACKWARDS)
+                MediaViewerEvent.LoadMore(Timeline.PaginationDirection.BACKWARDS)
             )
             loadMoreLambda.assertions().isCalledOnce().with(value(Timeline.PaginationDirection.BACKWARDS))
+        }
+    }
+
+    @Test
+    fun `present - receiving loading items with different timestamps emits different items too`() = runTest {
+        val loadMoreLambda = lambdaRecorder<Timeline.PaginationDirection, Unit> { }
+        val mediaGalleryDataSource = FakeMediaGalleryDataSource(
+            startLambda = { },
+            loadMoreLambda = loadMoreLambda,
+        )
+        val presenter = createMediaViewerPresenter(
+            localMediaFactory = localMediaFactory,
+            mediaGalleryDataSource = mediaGalleryDataSource,
+        )
+        val anImage = aMediaItemImage(
+            mediaSourceUrl = aUrl,
+        )
+        presenter.test {
+            awaitFirstItem()
+            mediaGalleryDataSource.emitGroupedMediaItems(
+                AsyncData.Success(
+                    GroupedMediaItems(
+                        imageAndVideoItems = persistentListOf(aForwardLoadingIndicator, anImage, aBackwardLoadingIndicator),
+                        fileItems = persistentListOf(),
+                    )
+                )
+            )
+            val updatedState = awaitItem()
+
+            // Get the exact same items, but with new timestamps for the loading indicators
+            mediaGalleryDataSource.emitGroupedMediaItems(
+                AsyncData.Success(
+                    GroupedMediaItems(
+                        imageAndVideoItems = persistentListOf(
+                            aForwardLoadingIndicator.copy(timestamp = 1234L),
+                            anImage,
+                            aBackwardLoadingIndicator.copy(timestamp = 1234L),
+                        ),
+                        fileItems = persistentListOf(),
+                    )
+                )
+            )
+
+            // We should get a new list of items, which should not be equal to the previous one
+            assertThat(updatedState.listData).isNotEqualTo(awaitItem().listData)
         }
     }
 
@@ -795,10 +860,11 @@ class MediaViewerPresenterTest {
         )
         presenter.test {
             val initialState = awaitItem()
-            initialState.eventSink(MediaViewerEvents.OpenInfo(aMediaViewerPageData()))
+            initialState.eventSink(MediaViewerEvent.OpenInfo(aMediaViewerPageData()))
+            skipItems(1)
             val withBottomSheetState = awaitItem()
-            assertThat(withBottomSheetState.mediaBottomSheetState).isInstanceOf(MediaBottomSheetState.MediaDetailsBottomSheetState::class.java)
-            initialState.eventSink(MediaViewerEvents.ViewInTimeline(AN_EVENT_ID))
+            assertThat(withBottomSheetState.mediaBottomSheetState).isInstanceOf(MediaBottomSheetState.Details::class.java)
+            initialState.eventSink(MediaViewerEvent.ViewInTimeline(AN_EVENT_ID))
             val finalState = awaitItem()
             assertThat(finalState.mediaBottomSheetState).isEqualTo(MediaBottomSheetState.Hidden)
             onViewInTimelineClickLambda.assertions().isCalledOnce().with(value(AN_EVENT_ID))
@@ -824,10 +890,11 @@ class MediaViewerPresenterTest {
         )
         presenter.test {
             val initialState = awaitItem()
-            initialState.eventSink(MediaViewerEvents.OpenInfo(aMediaViewerPageData()))
+            initialState.eventSink(MediaViewerEvent.OpenInfo(aMediaViewerPageData()))
+            skipItems(1)
             val withBottomSheetState = awaitItem()
-            assertThat(withBottomSheetState.mediaBottomSheetState).isInstanceOf(MediaBottomSheetState.MediaDetailsBottomSheetState::class.java)
-            initialState.eventSink(MediaViewerEvents.Forward(AN_EVENT_ID))
+            assertThat(withBottomSheetState.mediaBottomSheetState).isInstanceOf(MediaBottomSheetState.Details::class.java)
+            initialState.eventSink(MediaViewerEvent.Forward(AN_EVENT_ID))
             val finalState = awaitItem()
             assertThat(finalState.mediaBottomSheetState).isEqualTo(MediaBottomSheetState.Hidden)
             onForwardClickLambda.assertions().isCalledOnce()
@@ -855,10 +922,11 @@ class MediaViewerPresenterTest {
         )
         presenter.test {
             val initialState = awaitItem()
-            initialState.eventSink(MediaViewerEvents.OpenInfo(aMediaViewerPageData()))
+            initialState.eventSink(MediaViewerEvent.OpenInfo(aMediaViewerPageData()))
+            skipItems(1)
             val withBottomSheetState = awaitItem()
-            assertThat(withBottomSheetState.mediaBottomSheetState).isInstanceOf(MediaBottomSheetState.MediaDetailsBottomSheetState::class.java)
-            initialState.eventSink(MediaViewerEvents.Forward(AN_EVENT_ID))
+            assertThat(withBottomSheetState.mediaBottomSheetState).isInstanceOf(MediaBottomSheetState.Details::class.java)
+            initialState.eventSink(MediaViewerEvent.Forward(AN_EVENT_ID))
             val finalState = awaitItem()
             assertThat(finalState.mediaBottomSheetState).isEqualTo(MediaBottomSheetState.Hidden)
             onForwardClickLambda.assertions().isCalledOnce()
@@ -873,35 +941,40 @@ class MediaViewerPresenterTest {
 
 internal fun TestScope.createMediaViewerPresenter(
     localMediaFactory: LocalMediaFactory,
+    inputs: MediaViewerEntryPoint.Params? = null,
     eventId: EventId? = null,
-    mode: MediaViewerEntryPoint.MediaViewerMode = MediaViewerEntryPoint.MediaViewerMode.SingleMedia,
+    mode: MediaViewerEntryPoint.MediaViewerMode = MediaViewerEntryPoint.MediaViewerMode.TimelineImagesAndVideos(Timeline.Mode.Media),
     matrixMediaLoader: FakeMatrixMediaLoader = FakeMatrixMediaLoader(),
     localMediaActions: FakeLocalMediaActions = FakeLocalMediaActions(),
     mediaGalleryDataSource: MediaGalleryDataSource = FakeMediaGalleryDataSource(
         startLambda = { },
     ),
-    canShowInfo: Boolean = true,
     mediaViewerNavigator: MediaViewerNavigator = FakeMediaViewerNavigator(),
     room: JoinedRoom = FakeJoinedRoom(
         liveTimeline = FakeTimeline(),
     ),
     featureFlagService: FeatureFlagService = FakeFeatureFlagService(),
 ): MediaViewerPresenter {
+    val actualInputs = inputs ?: createMediaViewerEntryPointParams(eventId = eventId, mode = mode)
+    val actualMode = when (actualInputs) {
+        is MediaViewerEntryPoint.Params.Avatar -> MediaViewerEntryPoint.MediaViewerMode.TimelineImagesAndVideos(Timeline.Mode.Media)
+        is MediaViewerEntryPoint.Params.EventGallery -> MediaViewerEntryPoint.MediaViewerMode.TimelineImagesAndVideos(Timeline.Mode.Media)
+        is MediaViewerEntryPoint.Params.RoomMedia -> actualInputs.mode
+    }
     return MediaViewerPresenter(
-        inputs = createMediaViewerEntryPointParams(
-            eventId = eventId,
-            mode = mode,
-            canShowInfo = canShowInfo,
-        ),
+        inputs = actualInputs,
         navigator = mediaViewerNavigator,
         dataSource = MediaViewerDataSource(
-            mode = mode,
+            coroutineScope = backgroundScope,
+            mode = actualMode,
             dispatcher = testCoroutineDispatchers().computation,
             galleryDataSource = mediaGalleryDataSource,
             mediaLoader = matrixMediaLoader,
             localMediaFactory = localMediaFactory,
             systemClock = FakeSystemClock(),
             pagerKeysHandler = PagerKeysHandler(),
+            contentScannerService = { _, _ -> },
+            contentValidationCache = NoopEventContentValidationCache(),
         ),
         room = room,
         localMediaActions = localMediaActions,
@@ -911,13 +984,12 @@ internal fun TestScope.createMediaViewerPresenter(
 
 internal fun createMediaViewerEntryPointParams(
     eventId: EventId? = null,
-    mode: MediaViewerEntryPoint.MediaViewerMode = MediaViewerEntryPoint.MediaViewerMode.SingleMedia,
-    canShowInfo: Boolean = true,
-) = MediaViewerEntryPoint.Params(
+    mode: MediaViewerEntryPoint.MediaViewerMode = MediaViewerEntryPoint.MediaViewerMode.TimelineFilesAndAudios(timelineMode = Timeline.Mode.Media),
+) = MediaViewerEntryPoint.Params.RoomMedia(
     mode = mode,
     eventId = eventId,
     mediaInfo = TESTED_MEDIA_INFO,
     mediaSource = aMediaSource(),
     thumbnailSource = null,
-    canShowInfo = canShowInfo,
+    blurHash = null,
 )
