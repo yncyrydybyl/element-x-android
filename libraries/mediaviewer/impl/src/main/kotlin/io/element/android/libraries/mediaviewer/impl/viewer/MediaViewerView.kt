@@ -249,52 +249,65 @@ fun MediaViewerView(
                             Modifier
                         }
                     }
-                    Box(
-                        modifier = loadMediaOnVisibilityChangedModifier.fillMaxSize()
-                    ) {
-                        val isDisplayed = remember(pagerState.settledPage) {
-                            // This 'item provider' lambda will be called when the data source changes with an outdated `settlePage` value
-                            // So we need to update this value only when the `settledPage` value changes. It seems like a bug that needs to be fixed in Compose.
-                            page == pagerState.settledPage
-                        }
-                        val navigationBarPadding = WindowInsets.navigationBars.getBottom(LocalDensity.current)
-                        MediaViewerPage(
-                            isDisplayed = isDisplayed,
-                            showOverlay = showOverlay,
-                            containerPadding = padding,
-                            bottomPaddingInPixels = (bottomPaddingInPixels - navigationBarPadding).coerceAtLeast(0),
-                            data = dataForPage,
-                            textFileViewer = textFileViewer,
-                            onDismiss = onBackClick,
-                            onRetry = {
-                                state.eventSink(MediaViewerEvent.LoadMedia(dataForPage))
-                            },
-                            onOpenWith = {
-                                state.eventSink(MediaViewerEvent.OpenWith(dataForPage))
-                            },
-                            onDismissError = {
-                                state.eventSink(MediaViewerEvent.ClearLoadingError(dataForPage))
-                            },
-                            onShowOverlayChange = {
-                                showOverlay = it
-                            },
-                            audioFocus = audioFocus,
-                            isUserSelected = (state.listData[page] as? MediaViewerPageData.MediaViewerData)?.eventId == state.initiallySelectedEventId,
-                        )
-                        // Bottom bar
-                        AnimatedVisibility(
-                            visible = showOverlay,
-                            enter = fadeIn(),
-                            exit = fadeOut(),
-                            modifier = Modifier.align(Alignment.BottomCenter),
+                    val pageContent: @Composable () -> Unit = {
+                        Box(
+                            modifier = loadMediaOnVisibilityChangedModifier.fillMaxSize()
                         ) {
-                            MediaViewerBottomBar(
-                                showDivider = dataForPage.mediaInfo.mimeType.isMimeTypeVideo(),
-                                caption = dataForPage.mediaInfo.caption,
-                                formattedCaption = dataForPage.mediaInfo.formattedCaption,
-                                onHeightChange = { bottomPaddingInPixels = it },
+                            val isDisplayed = remember(pagerState.settledPage) {
+                                // This 'item provider' lambda will be called when the data source changes with an outdated `settlePage` value
+                                // So we need to update this value only when the `settledPage` value changes. It seems like a bug that needs to be fixed in Compose.
+                                page == pagerState.settledPage
+                            }
+                            val navigationBarPadding = WindowInsets.navigationBars.getBottom(LocalDensity.current)
+                            MediaViewerPage(
+                                isDisplayed = isDisplayed,
+                                showOverlay = showOverlay,
+                                containerPadding = padding,
+                                bottomPaddingInPixels = (bottomPaddingInPixels - navigationBarPadding).coerceAtLeast(0),
+                                data = dataForPage,
+                                textFileViewer = textFileViewer,
+                                onDismiss = onBackClick,
+                                onRetry = {
+                                    state.eventSink(MediaViewerEvent.LoadMedia(dataForPage))
+                                },
+                                onOpenWith = {
+                                    state.eventSink(MediaViewerEvent.OpenWith(dataForPage))
+                                },
+                                onDismissError = {
+                                    state.eventSink(MediaViewerEvent.ClearLoadingError(dataForPage))
+                                },
+                                onShowOverlayChange = {
+                                    showOverlay = it
+                                },
+                                audioFocus = audioFocus,
+                                isUserSelected = (state.listData[page] as? MediaViewerPageData.MediaViewerData)?.eventId == state.initiallySelectedEventId,
                             )
+                            // Bottom bar
+                            AnimatedVisibility(
+                                visible = showOverlay,
+                                enter = fadeIn(),
+                                exit = fadeOut(),
+                                modifier = Modifier.align(Alignment.BottomCenter),
+                            ) {
+                                MediaViewerBottomBar(
+                                    showDivider = dataForPage.mediaInfo.mimeType.isMimeTypeVideo(),
+                                    caption = dataForPage.mediaInfo.caption,
+                                    formattedCaption = dataForPage.mediaInfo.formattedCaption,
+                                    onHeightChange = { bottomPaddingInPixels = it },
+                                )
+                            }
                         }
+                    }
+                    if (state.isFoldableFeaturesEnabled) {
+                        FoldAwareMediaWrapper(
+                            mediaInfo = dataForPage.mediaInfo,
+                            eventId = dataForPage.eventId,
+                            eventSink = state.eventSink,
+                            data = dataForPage,
+                            content = pageContent,
+                        )
+                    } else {
+                        pageContent()
                     }
                 }
             }
