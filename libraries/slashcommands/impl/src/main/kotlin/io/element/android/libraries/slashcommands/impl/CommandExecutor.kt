@@ -44,9 +44,10 @@ class CommandExecutor(
     ): Result<Unit> {
         return when (slashCommand) {
             is SlashCommand.BanUser -> banUser(slashCommand)
+            is SlashCommand.ChangeAvatar -> changeAvatar()
             is SlashCommand.ChangeAvatarForRoom -> changeAvatarForRoom()
             is SlashCommand.ChangeDisplayName -> changeDisplayName(slashCommand)
-            is SlashCommand.ChangeDisplayNameForRoom -> changeDisplayNameForRoom()
+            is SlashCommand.ChangeDisplayNameForRoom -> changeDisplayNameForRoom(slashCommand)
             is SlashCommand.ChangeRoomAvatar -> changeRoomAvatar()
             is SlashCommand.ChangeRoomName -> changeRoomName(slashCommand)
             is SlashCommand.ChangeTopic -> changeTopic(slashCommand)
@@ -170,12 +171,16 @@ class CommandExecutor(
         return Result.failure(Exception("Not yet implemented"))
     }
 
-    private fun changeDisplayNameForRoom(): Result<Unit> {
-        return Result.failure(Exception("Not yet implemented"))
+    private suspend fun changeDisplayNameForRoom(slashCommand: SlashCommand.ChangeDisplayNameForRoom): Result<Unit> {
+        return joinedRoom.setOwnMemberDisplayName(slashCommand.displayName)
     }
 
     private suspend fun changeDisplayName(slashCommand: SlashCommand.ChangeDisplayName): Result<Unit> {
         return matrixClient.setDisplayName(slashCommand.displayName)
+    }
+
+    private fun changeAvatar(): Result<Unit> {
+        return Result.failure(Exception("Not yet implemented"))
     }
 
     private fun changeAvatarForRoom(): Result<Unit> {

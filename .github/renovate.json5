@@ -7,7 +7,6 @@
     "PR-Dependencies",
   ],
   "ignoreDeps": [
-    "string:app_name",
     "gradle",
   ],
   "minimumReleaseAge": "7 days",
@@ -33,6 +32,13 @@
         "/^org.maplibre/",
         "/^org.jetbrains.kotlinx:kotlinx-datetime/",
       ],
+    },
+    {
+      // Keep Guava on the Android variant and ignore jre-only upgrades.
+      "matchPackageNames": [
+        "com.google.guava:guava",
+      ],
+      "allowedVersions": "/-android$/",
     },
     {
       // Limit PostHog Android upgrade to one PR per month, the first day of the month

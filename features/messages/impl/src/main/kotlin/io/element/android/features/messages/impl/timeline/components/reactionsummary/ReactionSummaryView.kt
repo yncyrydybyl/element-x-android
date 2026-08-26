@@ -90,7 +90,8 @@ fun ReactionSummaryView(
     if (state.target != null) {
         ModalBottomSheet(
             onDismissRequest = ::onDismiss,
-            modifier = modifier
+            modifier = modifier,
+            scrollable = false,
         ) {
             ReactionSummaryViewContent(summary = state.target)
         }
@@ -292,7 +293,7 @@ private fun SenderRow(
 @PreviewsDayNight
 @Composable
 internal fun ReactionSummaryViewContentPreview(
-    @PreviewParameter(ReactionSummaryStateProvider::class) state: ReactionSummaryState
+    @PreviewParameter(ReactionSummaryStatePreviewParam::class) state: ReactionSummaryState
 ) = ElementPreview {
     ReactionSummaryViewContent(summary = state.target as ReactionSummaryState.Summary)
 }

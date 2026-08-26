@@ -24,11 +24,11 @@ import extension.buildConfigFieldStr
 import extension.locales
 import extension.setupDependencyInjection
 import extension.testCommonDependencies
+import org.sonarqube.gradle.SonarResolverTask
 import java.util.Locale
 
 plugins {
     id("io.element.android-compose-application")
-    alias(libs.plugins.kotlin.android)
     // When using precompiled plugins, we need to apply the firebase plugin like this
     id(libs.plugins.firebaseAppDistribution.get().pluginId)
     id("kotlin-parcelize")
@@ -103,13 +103,13 @@ android {
     logger.warnInBox("Building ${defaultConfig.applicationId} ($baseAppName) [$buildType]")
 
     buildTypes {
-        val oidcRedirectSchemeBase = BuildTimeConfig.METADATA_HOST_REVERSED ?: "io.element.android"
+        val oAuthRedirectSchemeBase = BuildTimeConfig.METADATA_HOST_REVERSED ?: "io.element.android"
         getByName("debug") {
             resValue("string", "app_name", "$baseAppName dbg")
             resValue(
                 "string",
                 "login_redirect_scheme",
-                "$oidcRedirectSchemeBase.debug",
+                "$oAuthRedirectSchemeBase.debug",
             )
             applicationIdSuffix = ".debug"
             signingConfig = signingConfigs.getByName("debug")
@@ -120,31 +120,18 @@ android {
             resValue(
                 "string",
                 "login_redirect_scheme",
-                oidcRedirectSchemeBase,
+                oAuthRedirectSchemeBase,
             )
             signingConfig = signingConfigs.getByName("debug")
 
             optimization {
                 enable = true
                 keepRules {
-                    files.add(File(projectDir, "common-proguard-rules.pro"))
-                    files.add(getDefaultProguardFile("proguard-android-optimize.txt"))
-
-                    // Depending on whether the app flavor is enterprise or not we want to use different proguard rules.
-                    val flavorProguardFile = if (isEnterpriseBuild) {
-                        // Custom rules for enterprise builds
-                        File(projectDir, "enterprise-proguard-rules.pro")
-                    } else {
-                        // These default rules prevent the OSS app from being obfuscated
-                        File(projectDir, "default-proguard-rules.pro")
-                    }
-
-                    if (flavorProguardFile.exists()) {
-                        files.add(flavorProguardFile)
-                    } else {
-                        logger.warn("Proguard file ${flavorProguardFile.absolutePath} does not exist")
-                    }
+                    // Equivalent of adding `getDefaultProguardFile("proguard-android-optimize.txt")` (this is the default value).
+                    includeDefault = true
                 }
+                // Our custom keep rules are registered as `keepRules` source folders in the `androidComponents` block below,
+                // as the former `keepRules.files` DSL is deprecated since AGP 9.
             }
         }
 
@@ -157,7 +144,7 @@ android {
             resValue(
                 "string",
                 "login_redirect_scheme",
-                "$oidcRedirectSchemeBase.nightly",
+                "$oAuthRedirectSchemeBase.nightly",
             )
             matchingFallbacks += listOf("release")
             signingConfig = signingConfigs.getByName("nightly")
@@ -189,6 +176,7 @@ android {
 
     buildFeatures {
         buildConfig = true
+        resValues = true
     }
     flavorDimensions += "store"
     productFlavors {
@@ -228,6 +216,30 @@ androidComponents {
     )
 
     onVariants { variant ->
+        // Register the R8 keep rules source folders for optimized build types (release, nightly).
+        // Replaces the deprecated `optimization.keepRules.files` DSL (AGP 9+).
+        if (variant.buildType != "debug") {
+            variant.sources.keepRules?.let { keepRules ->
+                // Common rules, always applied.
+                keepRules.addStaticSourceDirectory("proguard/common")
+
+                // Depending on whether the app flavor is enterprise or not we want to use different proguard rules.
+                val flavorProguardDir = if (isEnterpriseBuild) {
+                    // Custom rules for enterprise builds
+                    "../enterprise/proguard"
+                } else {
+                    // Custom fules for FOSS builds
+                    "proguard/foss"
+                }
+
+                if (File(projectDir, flavorProguardDir).exists()) {
+                    keepRules.addStaticSourceDirectory(flavorProguardDir)
+                } else {
+                    logger.warn("Proguard folder ${File(projectDir, flavorProguardDir).absolutePath} does not exist")
+                }
+            }
+        }
+
         // Assigns a different version code for each output APK
         // other than the universal APK.
         variant.outputs.forEach { output ->
@@ -243,6 +255,11 @@ androidComponents {
 
     val reportingExtension: ReportingExtension = project.extensions.getByType(ReportingExtension::class.java)
     configureLicensesTasks(reportingExtension)
+}
+
+// Configure the SonarQube plugin to wait for the resource generation tasks to complete before running the analysis.
+tasks.withType<SonarResolverTask>().configureEach {
+    dependsOn("generateGplayDebugResValues", "generateGplayDebugAndroidTestResValues")
 }
 
 setupDependencyInjection()

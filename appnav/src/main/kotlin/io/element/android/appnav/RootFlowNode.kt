@@ -32,7 +32,6 @@ import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedInject
 import im.vector.app.features.analytics.plan.JoinedRoom
 import io.element.android.annotations.ContributesNode
-import io.element.android.appnav.di.MatrixSessionCache
 import io.element.android.appnav.intent.IntentResolver
 import io.element.android.appnav.intent.ResolvedIntent
 import io.element.android.appnav.room.RoomFlowNode
@@ -40,6 +39,7 @@ import io.element.android.appnav.room.RoomNavigationTarget
 import io.element.android.appnav.root.RootNavStateFlowFactory
 import io.element.android.appnav.root.RootPresenter
 import io.element.android.appnav.root.RootView
+import io.element.android.appnav.session.MatrixSessionCache
 import io.element.android.features.announcement.api.AnnouncementService
 import io.element.android.features.login.api.LoginParams
 import io.element.android.features.login.api.accesscontrol.AccountProviderAccessControl
@@ -63,8 +63,8 @@ import io.element.android.libraries.matrix.api.core.ThreadId
 import io.element.android.libraries.matrix.api.core.asEventId
 import io.element.android.libraries.matrix.api.core.toRoomIdOrAlias
 import io.element.android.libraries.matrix.api.permalink.PermalinkData
-import io.element.android.libraries.oidc.api.OidcAction
-import io.element.android.libraries.oidc.api.OidcActionFlow
+import io.element.android.libraries.oauth.api.OAuthAction
+import io.element.android.libraries.oauth.api.OAuthActionFlow
 import io.element.android.libraries.sessionstorage.api.LoggedInState
 import io.element.android.libraries.sessionstorage.api.SessionStore
 import io.element.android.libraries.ui.common.nodes.emptyNode
@@ -95,7 +95,7 @@ class RootFlowNode(
     private val signedOutEntryPoint: SignedOutEntryPoint,
     private val accountSelectEntryPoint: AccountSelectEntryPoint,
     private val intentResolver: IntentResolver,
-    private val oidcActionFlow: OidcActionFlow,
+    private val oAuthActionFlow: OAuthActionFlow,
     private val featureFlagService: FeatureFlagService,
     private val announcementService: AnnouncementService,
     private val analyticsService: AnalyticsService,
@@ -109,6 +109,13 @@ class RootFlowNode(
     buildContext = buildContext,
     plugins = plugins
 ) {
+    /**
+     * Login params coming from a launch or new [Intent], waiting to be consumed by the not logged in flow.
+     * Kept here so that the root nav target can be computed from both the logged in state and the pending
+     * login params, whatever the order in which the intent and the first nav state emission are processed.
+     */
+    private var pendingLoginParams: LoginParams? = null
+
     override fun onBuilt() {
         analyticsColdStartWatcher.start()
         appCoroutineScope.launch {
@@ -152,7 +159,7 @@ class RootFlowNode(
                         }
                     }
                     LoggedInState.NotLoggedIn -> {
-                        switchToNotLoggedInFlow(null)
+                        switchToNotLoggedInFlow(pendingLoginParams)
                     }
                 }
             }
@@ -194,15 +201,18 @@ class RootFlowNode(
     }
 
     private fun switchToLoggedInFlow(sessionId: SessionId, navId: Int) {
+        pendingLoginParams = null
         backstack.safeRoot(NavTarget.LoggedInFlow(sessionId, navId))
     }
 
     private fun switchToNotLoggedInFlow(params: LoginParams?) {
+        Timber.d("switchToNotLoggedInFlow, hasLoginParams=${params != null}")
         matrixSessionCache.removeAll()
         backstack.safeRoot(NavTarget.NotLoggedInFlow(params))
     }
 
     private fun switchToSignedOutFlow(sessionId: SessionId) {
+        pendingLoginParams = null
         backstack.safeRoot(NavTarget.SignedOutFlow(sessionId))
     }
 
@@ -252,7 +262,8 @@ class RootFlowNode(
             val transitionHandler = rememberDelegateTransitionHandler<NavTarget, BackStack.State> { navTarget ->
                 when (navTarget) {
                     is NavTarget.SplashScreen,
-                    is NavTarget.LoggedInFlow -> backstackFader
+                    is NavTarget.LoggedInFlow,
+                    is NavTarget.NotLoggedInFlow -> backstackFader
                     else -> backstackSlider
                 }
             }
@@ -318,6 +329,7 @@ class RootFlowNode(
                     }
 
                     override fun onDone() {
+                        pendingLoginParams = null
                         backstack.pop()
                     }
                 }
@@ -391,7 +403,7 @@ class RootFlowNode(
                 navigateTo(resolvedIntent.deeplinkData)
             }
             is ResolvedIntent.Login -> onLoginLink(resolvedIntent.params)
-            is ResolvedIntent.Oidc -> onOidcAction(resolvedIntent.oidcAction)
+            is ResolvedIntent.OAuth -> onOAuthAction(resolvedIntent.oAuthAction)
             is ResolvedIntent.Permalink -> navigateTo(resolvedIntent.permalinkData)
             is ResolvedIntent.IncomingShare -> onIncomingShare(resolvedIntent.shareIntentData)
         }
@@ -417,6 +429,7 @@ class RootFlowNode(
                     Timber.w("Login link ignored, multi account is disabled")
                 }
             } else {
+                pendingLoginParams = params
                 switchToNotLoggedInFlow(params)
             }
         } else {
@@ -528,8 +541,8 @@ class RootFlowNode(
         }
     }
 
-    private fun onOidcAction(oidcAction: OidcAction) {
-        oidcActionFlow.post(oidcAction)
+    private fun onOAuthAction(oAuthAction: OAuthAction) {
+        oAuthActionFlow.post(oAuthAction)
     }
 
     private suspend fun attachSession(sessionId: SessionId): LoggedInFlowNode {
