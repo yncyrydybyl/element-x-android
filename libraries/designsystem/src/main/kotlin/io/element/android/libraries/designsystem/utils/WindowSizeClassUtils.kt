@@ -10,10 +10,17 @@ package io.element.android.libraries.designsystem.utils
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun hasCompactHeightWindowSize(): Boolean {
     return currentWindowAdaptiveInfo().windowSizeClass.heightSizeClass == WindowHeightSizeClass.Compact
+}
+
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+fun hasCompactWidthWindowSize(): Boolean {
+    return currentWindowAdaptiveInfo().windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
 }

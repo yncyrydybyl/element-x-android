@@ -13,6 +13,7 @@ package io.element.android.features.home.impl
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -74,6 +75,7 @@ import io.element.android.libraries.designsystem.theme.components.HorizontalFloa
 import io.element.android.libraries.designsystem.theme.components.HorizontalFloatingToolbarSeparator
 import io.element.android.libraries.designsystem.theme.components.Icon
 import io.element.android.libraries.designsystem.theme.components.Scaffold
+import io.element.android.libraries.designsystem.utils.hasCompactWidthWindowSize
 import io.element.android.libraries.designsystem.utils.lazyColumnContentPadding
 import io.element.android.libraries.designsystem.utils.scaffoldScrollableContentInsets
 import io.element.android.libraries.designsystem.utils.snackbar.SnackbarHost
@@ -285,35 +287,50 @@ private fun HomeScaffold(
             )
             when (state.currentHomeNavigationBarItem) {
                 HomeNavigationBarItem.Chats -> {
-                    if (state.isFoldableFeaturesEnabled) {
-                        FoldableQuickReplyHeader(
+                    // The quick-reply header is designed for the (compact) cover display only,
+                    // and must be stacked above the list, not overlaid on it.
+                    val showQuickReplyHeader = state.isFoldableFeaturesEnabled && hasCompactWidthWindowSize()
+                    val listPadding = if (showQuickReplyHeader) {
+                        PaddingValues(
+                            start = padding.calculateStartPadding(LocalLayoutDirection.current),
+                            end = padding.calculateEndPadding(LocalLayoutDirection.current),
+                            bottom = padding.calculateBottomPadding(),
+                        )
+                    } else {
+                        outerPadding
+                    }
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        if (showQuickReplyHeader) {
+                            FoldableQuickReplyHeader(
+                                contentState = roomListState.contentState,
+                                onRoomClick = { onRoomClick(RoomId(it)) },
+                                modifier = Modifier
+                                    .padding(
+                                        top = padding.calculateTopPadding(),
+                                        start = padding.calculateStartPadding(LocalLayoutDirection.current),
+                                        end = padding.calculateEndPadding(LocalLayoutDirection.current),
+                                    )
+                            )
+                        }
+                        RoomListContentView(
                             contentState = roomListState.contentState,
-                            onRoomClick = { onRoomClick(RoomId(it)) },
+                            filtersState = roomListState.filtersState,
+                            spaceFiltersState = roomListState.spaceFiltersState,
+                            lazyListState = roomsLazyListState,
+                            hideInvitesAvatars = roomListState.hideInvitesAvatars,
+                            eventSink = roomListState.eventSink,
+                            onSetUpRecoveryClick = onSetUpRecoveryClick,
+                            onConfirmRecoveryKeyClick = onConfirmRecoveryKeyClick,
+                            onRoomClick = ::onRoomClick,
+                            onCreateRoomClick = onStartChatClick,
+                            contentPadding = lazyColumnContentPadding + contentPadding,
                             modifier = Modifier
-                                .padding(
-                                    top = padding.calculateTopPadding(),
-                                    start = padding.calculateStartPadding(LocalLayoutDirection.current),
-                                    end = padding.calculateEndPadding(LocalLayoutDirection.current),
-                                )
+                                .weight(1f)
+                                .padding(listPadding)
+                                .consumeWindowInsets(listPadding)
+                                .hazeSource(state = hazeState)
                         )
                     }
-                    RoomListContentView(
-                        contentState = roomListState.contentState,
-                        filtersState = roomListState.filtersState,
-                        spaceFiltersState = roomListState.spaceFiltersState,
-                        lazyListState = roomsLazyListState,
-                        hideInvitesAvatars = roomListState.hideInvitesAvatars,
-                        eventSink = roomListState.eventSink,
-                        onSetUpRecoveryClick = onSetUpRecoveryClick,
-                        onConfirmRecoveryKeyClick = onConfirmRecoveryKeyClick,
-                        onRoomClick = ::onRoomClick,
-                        onCreateRoomClick = onStartChatClick,
-                        contentPadding = lazyColumnContentPadding + contentPadding,
-                        modifier = Modifier
-                            .padding(outerPadding)
-                            .consumeWindowInsets(outerPadding)
-                            .hazeSource(state = hazeState)
-                    )
                     SpaceFiltersView(roomListState.spaceFiltersState)
                 }
                 HomeNavigationBarItem.Spaces -> {
