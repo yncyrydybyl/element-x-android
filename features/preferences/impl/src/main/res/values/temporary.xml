@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2026 Element Creations Ltd.
+  ~
+  ~ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial.
+  ~ Please see LICENSE files in the repository root for full details.
+  -->
+
+<resources>
+    <string name="screen_advanced_settings_colour_theme_title">Colour theme</string>
+    <string name="screen_advanced_settings_colour_theme_description">Choose the accent colour used across the app.</string>
+    <string name="screen_advanced_settings_colour_theme_default">Element</string>
+    <string name="screen_advanced_settings_colour_theme_yellow">Yellow</string>
+    <string name="screen_advanced_settings_colour_theme_hackmas">Håck ma\'s Castle</string>
+</resources>

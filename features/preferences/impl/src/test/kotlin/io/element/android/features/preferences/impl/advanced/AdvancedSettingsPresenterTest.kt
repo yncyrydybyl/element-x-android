@@ -12,6 +12,7 @@ import app.cash.molecule.RecompositionMode
 import app.cash.molecule.moleculeFlow
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import io.element.android.compound.theme.AccentTheme
 import io.element.android.compound.theme.Theme
 import io.element.android.libraries.architecture.AsyncAction
 import io.element.android.libraries.featureflag.api.FeatureFlags
@@ -179,6 +180,29 @@ class AdvancedSettingsPresenterTest {
             }
             with(awaitItem()) {
                 assertThat((mediaOptimizationState as MediaOptimizationState.Split).videoPreset).isEqualTo(VideoCompressionPreset.HIGH)
+            }
+        }
+    }
+
+    @Test
+    fun `present - change accent theme`() = runTest {
+        val presenter = createAdvancedSettingsPresenter()
+        moleculeFlow(RecompositionMode.Immediate) {
+            presenter.present()
+        }.test {
+            // Skip until the initial data it loaded
+            skipItems(1)
+
+            with(awaitItem()) {
+                assertThat(accentTheme).isEqualTo(AccentTheme.Default)
+                eventSink(AdvancedSettingsEvent.SetAccentTheme(AccentTheme.HackmasCastle))
+            }
+            with(awaitItem()) {
+                assertThat(accentTheme).isEqualTo(AccentTheme.HackmasCastle)
+                eventSink(AdvancedSettingsEvent.SetAccentTheme(AccentTheme.Default))
+            }
+            with(awaitItem()) {
+                assertThat(accentTheme).isEqualTo(AccentTheme.Default)
             }
         }
     }

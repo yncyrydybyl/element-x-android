@@ -45,6 +45,14 @@ interface AppPreferencesStore {
     fun getThemeFlow(): Flow<String?>
 
     /**
+     * @param accentTheme the name of the accent colour theme to apply across the app.
+     */
+    suspend fun setAccentTheme(accentTheme: String)
+
+    /** The name of the chosen accent colour theme, or `null` when Element's own colours should be used. */
+    fun getAccentThemeFlow(): Flow<String?>
+
+    /**
      * @param value the distance in metres the user must move before a new live location is published.
      */
     suspend fun setLiveLocationMinimumDistanceInMetersUpdate(value: Int)

@@ -44,10 +44,6 @@ import io.element.android.libraries.designsystem.preview.PreviewsDayNight
 import io.element.android.libraries.designsystem.theme.components.Text
 import io.element.android.libraries.designsystem.theme.components.TextField
 
-// Accent colors matching the yellow customization (#A77AFF)
-private val AccentStart = Color(0xFFA77AFF)
-private val AccentEnd = Color(0xFFFFC107)
-
 @Composable
 fun PhotoDirectorView(
     state: PhotoDirectorState,
@@ -161,7 +157,10 @@ fun PhotoDirectorView(
                         .clip(CircleShape)
                         .background(
                             Brush.horizontalGradient(
-                                colors = listOf(AccentStart, AccentEnd),
+                                colors = listOf(
+                                    ElementTheme.colors.gradientActionStop2,
+                                    ElementTheme.colors.gradientActionStop4,
+                                ),
                             )
                         )
                         .clickable(enabled = state.capturedPhotos.isNotEmpty()) {

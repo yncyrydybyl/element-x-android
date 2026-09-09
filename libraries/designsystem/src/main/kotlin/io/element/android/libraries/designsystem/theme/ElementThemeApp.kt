@@ -16,8 +16,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import io.element.android.compound.colors.SemanticColorsLightDark
+import io.element.android.compound.colors.withAccent
+import io.element.android.compound.theme.AccentTheme
 import io.element.android.compound.theme.ElementTheme
 import io.element.android.compound.theme.Theme
+import io.element.android.compound.theme.mapToAccentTheme
 import io.element.android.compound.theme.mapToTheme
 import io.element.android.compound.tokens.generated.SemanticColors
 import io.element.android.libraries.core.meta.BuildMeta
@@ -67,6 +71,13 @@ fun ElementThemeApp(
     val theme by remember(isBlackThemeAllowed) {
         appPreferencesStore.getThemeFlow().mapToTheme(allowBlackTheme = isBlackThemeAllowed)
     }.collectAsState(initial = Theme.System)
+    val accentTheme by remember {
+        appPreferencesStore.getAccentThemeFlow().mapToAccentTheme()
+    }.collectAsState(initial = AccentTheme.Default)
+    // Applied on top of the incoming palettes so that any enterprise brand colours are preserved.
+    val accentedColors = remember(compoundLight, compoundDark, accentTheme) {
+        SemanticColorsLightDark(light = compoundLight, dark = compoundDark).withAccent(accentTheme)
+    }
     LaunchedEffect(theme) {
         AppCompatDelegate.setDefaultNightMode(
             when (theme) {
@@ -82,8 +93,8 @@ fun ElementThemeApp(
         ElementTheme(
             theme = theme,
             content = content,
-            compoundLight = compoundLight,
-            compoundDark = compoundDark,
+            compoundLight = accentedColors.light,
+            compoundDark = accentedColors.dark,
         )
     }
 }

@@ -9,6 +9,7 @@
 package io.element.android.features.preferences.impl.advanced
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import io.element.android.compound.theme.AccentTheme
 import io.element.android.libraries.architecture.AsyncAction
 import io.element.android.libraries.matrix.api.media.MediaPreviewValue
 import io.element.android.libraries.preferences.api.store.VideoCompressionPreset
@@ -30,6 +31,8 @@ open class AdvancedSettingsStatePreviewParam : PreviewParameterProvider<Advanced
                 compressImages = true,
                 videoPreset = VideoCompressionPreset.HIGH,
             )),
+            aAdvancedSettingsState(accentTheme = AccentTheme.Yellow),
+            aAdvancedSettingsState(accentTheme = AccentTheme.HackmasCastle),
         )
 }
 
@@ -39,6 +42,7 @@ fun aAdvancedSettingsState(
     mediaOptimizationState: MediaOptimizationState = MediaOptimizationState.AllMedia(isEnabled = false),
     theme: ThemeOption = ThemeOption.System,
     availableThemeOptions: ImmutableList<ThemeOption> = ThemeOption.entries.toImmutableList(),
+    accentTheme: AccentTheme = AccentTheme.Default,
     hideInviteAvatars: Boolean = false,
     timelineMediaPreviewValue: MediaPreviewValue = MediaPreviewValue.On,
     liveLocationMinimumDistanceUpdate: Int? = 50,
@@ -51,6 +55,7 @@ fun aAdvancedSettingsState(
     mediaOptimizationState = mediaOptimizationState,
     theme = theme,
     availableThemeOptions = availableThemeOptions,
+    accentTheme = accentTheme,
     mediaPreviewConfigState = MediaPreviewConfigState(
         hideInviteAvatars = hideInviteAvatars,
         timelineMediaPreviewValue = timelineMediaPreviewValue,
