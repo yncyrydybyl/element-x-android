@@ -49,7 +49,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -59,6 +58,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import io.element.android.compound.colors.contentColorOnAccent
 import io.element.android.compound.theme.ElementTheme
 import io.element.android.features.login.impl.R
 import io.element.android.libraries.designsystem.components.button.BackButton
@@ -70,11 +70,6 @@ import io.element.android.libraries.designsystem.theme.components.Text
 import io.element.android.libraries.designsystem.theme.components.TextButton
 import io.element.android.libraries.designsystem.theme.components.TopAppBar
 import io.element.android.libraries.ui.strings.CommonStrings
-
-// The yellow accent is shared across light & dark themes, so it (and the dark
-// content drawn on top of it) are defined as fixed colours here.
-private val Accent = Color(0xFFFFED00)
-private val OnAccent = Color(0xFF1B1D22)
 
 private data class Beat(
     @StringRes val title: Int,
@@ -163,6 +158,8 @@ private fun HowItWorksDiagram(
 ) {
     val ink = ElementTheme.colors.textPrimary
     val neutralLine = ElementTheme.colors.borderInteractiveSecondary
+    val accent = ElementTheme.colors.bgAccentRest
+    val onAccent = contentColorOnAccent(accent)
 
     val showYourProv = currentStep >= 1
     val showOthers = currentStep >= 2
@@ -201,13 +198,13 @@ private fun HowItWorksDiagram(
                 val rectSize = Size(maxX - minX, maxY - minY)
                 val corner = CornerRadius(26.dp.toPx())
                 drawRoundRect(
-                    color = Accent.copy(alpha = 0.10f * alphaRoom),
+                    color = accent.copy(alpha = 0.10f * alphaRoom),
                     topLeft = topLeft,
                     size = rectSize,
                     cornerRadius = corner,
                 )
                 drawRoundRect(
-                    color = Accent.copy(alpha = alphaRoom),
+                    color = accent.copy(alpha = alphaRoom),
                     topLeft = topLeft,
                     size = rectSize,
                     cornerRadius = corner,
@@ -239,7 +236,7 @@ private fun HowItWorksDiagram(
             // You -> your provider (accent, solid).
             if (alphaYouLink > 0f) {
                 drawLine(
-                    color = Accent,
+                    color = accent,
                     start = px(pYouPhone),
                     end = px(pYourProv),
                     strokeWidth = 3.5.dp.toPx(),
@@ -258,9 +255,9 @@ private fun HowItWorksDiagram(
             if (currentStep == 4) {
                 val route = listOf(px(pYouPhone), px(pYourProv), px(pBobProv), px(pBob))
                 val pos = pointAlong(route, dmProgress.value)
-                drawCircle(Accent.copy(alpha = 0.25f), radius = 13.dp.toPx(), center = pos)
-                drawCircle(Accent, radius = 7.dp.toPx(), center = pos)
-                drawCircle(OnAccent, radius = 2.5.dp.toPx(), center = pos)
+                drawCircle(accent.copy(alpha = 0.25f), radius = 13.dp.toPx(), center = pos)
+                drawCircle(accent, radius = 7.dp.toPx(), center = pos)
+                drawCircle(onAccent, radius = 2.5.dp.toPx(), center = pos)
             }
         }
 
@@ -321,8 +318,8 @@ private fun ProviderChip(
     label: String,
     isYours: Boolean,
 ) {
-    val borderColor = if (isYours) Accent else ElementTheme.colors.borderInteractiveSecondary
-    val headerColor = if (isYours) Accent else ElementTheme.colors.textPrimary
+    val borderColor = if (isYours) ElementTheme.colors.borderAccentPrimary else ElementTheme.colors.borderInteractiveSecondary
+    val headerColor = if (isYours) ElementTheme.colors.textActionAccent else ElementTheme.colors.textPrimary
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -359,7 +356,7 @@ private fun PersonNode(
     initial: String,
     isYours: Boolean,
 ) {
-    val borderColor = if (isYours) Accent else ElementTheme.colors.borderInteractiveSecondary
+    val borderColor = if (isYours) ElementTheme.colors.borderAccentPrimary else ElementTheme.colors.borderInteractiveSecondary
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -400,13 +397,13 @@ private fun HowItWorksCaption(currentStep: Int) {
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(percent = 50))
-                .background(Accent)
+                .background(ElementTheme.colors.bgAccentRest)
                 .padding(horizontal = 10.dp, vertical = 4.dp),
         ) {
             Text(
                 text = "Step ${currentStep + 1} / ${beats.size}",
                 style = ElementTheme.typography.fontBodyXsMedium,
-                color = OnAccent,
+                color = contentColorOnAccent(ElementTheme.colors.bgAccentRest),
             )
         }
         Spacer(modifier = Modifier.height(10.dp))
@@ -450,7 +447,7 @@ private fun HowItWorksDots(
                     .width(dotWidth)
                     .height(8.dp)
                     .clip(RoundedCornerShape(percent = 50))
-                    .background(if (active) Accent else ElementTheme.colors.borderInteractiveSecondary)
+                    .background(if (active) ElementTheme.colors.bgAccentRest else ElementTheme.colors.borderInteractiveSecondary)
                     .clickable { onStepClick(index) },
             )
         }

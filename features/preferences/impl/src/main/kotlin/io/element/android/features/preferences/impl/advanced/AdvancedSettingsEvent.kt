@@ -8,6 +8,7 @@
 
 package io.element.android.features.preferences.impl.advanced
 
+import io.element.android.compound.theme.AccentTheme
 import io.element.android.libraries.matrix.api.media.MediaPreviewValue
 import io.element.android.libraries.preferences.api.store.VideoCompressionPreset
 
@@ -18,6 +19,7 @@ sealed interface AdvancedSettingsEvent {
     data class SetCompressImages(val compress: Boolean) : AdvancedSettingsEvent
     data class SetVideoUploadQuality(val videoPreset: VideoCompressionPreset) : AdvancedSettingsEvent
     data class SetTheme(val theme: ThemeOption) : AdvancedSettingsEvent
+    data class SetAccentTheme(val accentTheme: AccentTheme) : AdvancedSettingsEvent
     data class SetTimelineMediaPreviewValue(val value: MediaPreviewValue) : AdvancedSettingsEvent
     data class SetHideInviteAvatars(val value: Boolean) : AdvancedSettingsEvent
     data class SetLiveLocationMinimumDistanceUpdate(val value: Int) : AdvancedSettingsEvent

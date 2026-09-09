@@ -8,9 +8,11 @@
 
 package io.element.android.features.preferences.impl.advanced
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.res.stringResource
+import io.element.android.compound.theme.AccentTheme
 import io.element.android.features.preferences.impl.R
 import io.element.android.libraries.designsystem.components.preferences.DropdownOption
 import io.element.android.libraries.preferences.api.store.VideoCompressionPreset
@@ -22,6 +24,7 @@ data class AdvancedSettingsState(
     val mediaOptimizationState: MediaOptimizationState?,
     val theme: ThemeOption,
     val availableThemeOptions: ImmutableList<ThemeOption>,
+    val accentTheme: AccentTheme,
     val mediaPreviewConfigState: MediaPreviewConfigState,
     val liveLocationMinimumDistanceUpdate: Int?,
     val eventSink: (AdvancedSettingsEvent) -> Unit
@@ -39,6 +42,15 @@ sealed interface MediaOptimizationState {
         is Split -> compressImages
     }
 }
+
+/** The label shown for an accent colour theme in the settings. */
+internal val AccentTheme.titleRes: Int
+    @StringRes
+    get() = when (this) {
+        AccentTheme.Default -> R.string.screen_advanced_settings_colour_theme_default
+        AccentTheme.Yellow -> R.string.screen_advanced_settings_colour_theme_yellow
+        AccentTheme.HackmasCastle -> R.string.screen_advanced_settings_colour_theme_hackmas
+    }
 
 enum class ThemeOption : DropdownOption {
     System {

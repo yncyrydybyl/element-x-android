@@ -15,7 +15,6 @@
 @file:Suppress("all")
 package io.element.android.compound.tokens.generated
 
-import androidx.compose.ui.graphics.Color
 import io.element.android.compound.annotations.CoreColorToken
 import io.element.android.compound.tokens.generated.internal.DarkColorTokens
 
@@ -24,11 +23,11 @@ import io.element.android.compound.tokens.generated.internal.DarkColorTokens
  */
 @OptIn(CoreColorToken::class)
 val compoundColorsDark = SemanticColors(
-    bgAccentHovered = Color(0xFFE6D500),
-    bgAccentPressed = Color(0xFFCCBD00),
-    bgAccentRest = Color(0xFFFFED00),
-    bgAccentSelected = Color(0x3BFFED00),
-    bgAccentSubtle = Color(0x1FFFED00),
+    bgAccentHovered = DarkColorTokens.colorGreen1000,
+    bgAccentPressed = DarkColorTokens.colorGreen1100,
+    bgAccentRest = DarkColorTokens.colorGreen900,
+    bgAccentSelected = DarkColorTokens.colorAlphaGreen300,
+    bgAccentSubtle = DarkColorTokens.colorGreen200,
     bgActionPrimaryDisabled = DarkColorTokens.colorGray700,
     bgActionPrimaryHovered = DarkColorTokens.colorGray1200,
     bgActionPrimaryPressed = DarkColorTokens.colorGray1100,
@@ -39,7 +38,7 @@ val compoundColorsDark = SemanticColors(
     bgActionTertiaryHovered = DarkColorTokens.colorGray300,
     bgActionTertiaryRest = DarkColorTokens.colorThemeBg,
     bgActionTertiarySelected = DarkColorTokens.colorGray400,
-    bgBadgeAccent = Color(0xFFFFED00),
+    bgBadgeAccent = DarkColorTokens.colorGreen400,
     bgBadgeCritical = DarkColorTokens.colorRed300,
     bgBadgeDefault = DarkColorTokens.colorThemeBg,
     bgBadgeInfo = DarkColorTokens.colorBlue400,
@@ -67,8 +66,8 @@ val compoundColorsDark = SemanticColors(
     bgSuccessPressed = DarkColorTokens.colorGreen1100,
     bgSuccessRest = DarkColorTokens.colorGreen900,
     bgSuccessSubtle = DarkColorTokens.colorGreen200,
-    borderAccentPrimary = Color(0xFFFFED00),
-    borderAccentSubtle = Color(0xFFFFEE00),
+    borderAccentPrimary = DarkColorTokens.colorGreen900,
+    borderAccentSubtle = DarkColorTokens.colorGreen700,
     borderCriticalHovered = DarkColorTokens.colorRed1000,
     borderCriticalPrimary = DarkColorTokens.colorRed900,
     borderCriticalSubtle = DarkColorTokens.colorRed500,
@@ -80,22 +79,22 @@ val compoundColorsDark = SemanticColors(
     borderInteractiveSecondary = DarkColorTokens.colorGray600,
     borderSuccessPrimary = DarkColorTokens.colorGreen900,
     borderSuccessSubtle = DarkColorTokens.colorGreen500,
-    gradientActionStop1 = Color(0xFFCCBD00),
-    gradientActionStop2 = Color(0xFFE6D500),
-    gradientActionStop3 = Color(0xFFFFED00),
-    gradientActionStop4 = Color(0xFFFFFF4D),
+    gradientActionStop1 = DarkColorTokens.colorGreen1100,
+    gradientActionStop2 = DarkColorTokens.colorGreen900,
+    gradientActionStop3 = DarkColorTokens.colorGreen700,
+    gradientActionStop4 = DarkColorTokens.colorGreen500,
     gradientCriticalStop1 = DarkColorTokens.colorRed200,
     gradientCriticalStop2 = DarkColorTokens.colorThemeBg,
     gradientInfoStop1 = DarkColorTokens.colorBlue200,
     gradientInfoStop2 = DarkColorTokens.colorThemeBg,
-    gradientSubtleStop1 = Color(0x69FFEE00),
-    gradientSubtleStop2 = Color(0x3BFFEE00),
-    gradientSubtleStop3 = Color(0x1CFFEE00),
-    gradientSubtleStop4 = Color(0x0FFFEE00),
-    gradientSubtleStop5 = Color(0x05FFEE00),
+    gradientSubtleStop1 = DarkColorTokens.colorAlphaGreen500,
+    gradientSubtleStop2 = DarkColorTokens.colorAlphaGreen400,
+    gradientSubtleStop3 = DarkColorTokens.colorAlphaGreen300,
+    gradientSubtleStop4 = DarkColorTokens.colorAlphaGreen200,
+    gradientSubtleStop5 = DarkColorTokens.colorAlphaGreen100,
     gradientSubtleStop6 = DarkColorTokens.colorTransparent,
-    iconAccentPrimary = Color(0xFFFFED00),
-    iconAccentTertiary = Color(0xFFE6D500),
+    iconAccentPrimary = DarkColorTokens.colorGreen900,
+    iconAccentTertiary = DarkColorTokens.colorGreen800,
     iconCriticalPrimary = DarkColorTokens.colorRed900,
     iconDisabled = DarkColorTokens.colorGray700,
     iconInfoPrimary = DarkColorTokens.colorBlue1100,

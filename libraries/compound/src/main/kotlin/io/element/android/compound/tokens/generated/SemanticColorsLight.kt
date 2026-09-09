@@ -15,7 +15,6 @@
 @file:Suppress("all")
 package io.element.android.compound.tokens.generated
 
-import androidx.compose.ui.graphics.Color
 import io.element.android.compound.annotations.CoreColorToken
 import io.element.android.compound.tokens.generated.internal.LightColorTokens
 
@@ -24,11 +23,11 @@ import io.element.android.compound.tokens.generated.internal.LightColorTokens
  */
 @OptIn(CoreColorToken::class)
 val compoundColorsLight = SemanticColors(
-    bgAccentHovered = Color(0xFFE6D500),
-    bgAccentPressed = Color(0xFFCCBD00),
-    bgAccentRest = Color(0xFFFFED00),
-    bgAccentSelected = Color(0x3BFFED00),
-    bgAccentSubtle = Color(0x1FFFED00),
+    bgAccentHovered = LightColorTokens.colorGreen1000,
+    bgAccentPressed = LightColorTokens.colorGreen1100,
+    bgAccentRest = LightColorTokens.colorGreen900,
+    bgAccentSelected = LightColorTokens.colorAlphaGreen300,
+    bgAccentSubtle = LightColorTokens.colorGreen200,
     bgActionPrimaryDisabled = LightColorTokens.colorGray700,
     bgActionPrimaryHovered = LightColorTokens.colorGray1200,
     bgActionPrimaryPressed = LightColorTokens.colorGray1100,
@@ -39,7 +38,7 @@ val compoundColorsLight = SemanticColors(
     bgActionTertiaryHovered = LightColorTokens.colorGray300,
     bgActionTertiaryRest = LightColorTokens.colorThemeBg,
     bgActionTertiarySelected = LightColorTokens.colorGray400,
-    bgBadgeAccent = Color(0xFFFFED00),
+    bgBadgeAccent = LightColorTokens.colorGreen400,
     bgBadgeCritical = LightColorTokens.colorRed300,
     bgBadgeDefault = LightColorTokens.colorThemeBg,
     bgBadgeInfo = LightColorTokens.colorBlue400,
@@ -67,8 +66,8 @@ val compoundColorsLight = SemanticColors(
     bgSuccessPressed = LightColorTokens.colorGreen1100,
     bgSuccessRest = LightColorTokens.colorGreen900,
     bgSuccessSubtle = LightColorTokens.colorGreen200,
-    borderAccentPrimary = Color(0xFFFFED00),
-    borderAccentSubtle = Color(0xFFFFEE00),
+    borderAccentPrimary = LightColorTokens.colorGreen900,
+    borderAccentSubtle = LightColorTokens.colorGreen700,
     borderCriticalHovered = LightColorTokens.colorRed1000,
     borderCriticalPrimary = LightColorTokens.colorRed900,
     borderCriticalSubtle = LightColorTokens.colorRed500,
@@ -80,22 +79,22 @@ val compoundColorsLight = SemanticColors(
     borderInteractiveSecondary = LightColorTokens.colorGray600,
     borderSuccessPrimary = LightColorTokens.colorGreen900,
     borderSuccessSubtle = LightColorTokens.colorGreen500,
-    gradientActionStop1 = Color(0xFFFFFF4D),
-    gradientActionStop2 = Color(0xFFFFED00),
-    gradientActionStop3 = Color(0xFFE6D500),
-    gradientActionStop4 = Color(0xFFCCBD00),
+    gradientActionStop1 = LightColorTokens.colorGreen500,
+    gradientActionStop2 = LightColorTokens.colorGreen700,
+    gradientActionStop3 = LightColorTokens.colorGreen900,
+    gradientActionStop4 = LightColorTokens.colorGreen1100,
     gradientCriticalStop1 = LightColorTokens.colorRed200,
     gradientCriticalStop2 = LightColorTokens.colorThemeBg,
     gradientInfoStop1 = LightColorTokens.colorBlue200,
     gradientInfoStop2 = LightColorTokens.colorThemeBg,
-    gradientSubtleStop1 = Color(0x69FFEE00),
-    gradientSubtleStop2 = Color(0x3BFFEE00),
-    gradientSubtleStop3 = Color(0x1CFFEE00),
-    gradientSubtleStop4 = Color(0x0FFFEE00),
-    gradientSubtleStop5 = Color(0x05FFEE00),
+    gradientSubtleStop1 = LightColorTokens.colorAlphaGreen500,
+    gradientSubtleStop2 = LightColorTokens.colorAlphaGreen400,
+    gradientSubtleStop3 = LightColorTokens.colorAlphaGreen300,
+    gradientSubtleStop4 = LightColorTokens.colorAlphaGreen200,
+    gradientSubtleStop5 = LightColorTokens.colorAlphaGreen100,
     gradientSubtleStop6 = LightColorTokens.colorTransparent,
-    iconAccentPrimary = Color(0xFF8A7800),
-    iconAccentTertiary = Color(0xFFA39000),
+    iconAccentPrimary = LightColorTokens.colorGreen900,
+    iconAccentTertiary = LightColorTokens.colorGreen800,
     iconCriticalPrimary = LightColorTokens.colorRed900,
     iconDisabled = LightColorTokens.colorGray700,
     iconInfoPrimary = LightColorTokens.colorBlue1100,

@@ -15,7 +15,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import dev.zacsweers.metro.Inject
+import io.element.android.compound.theme.AccentTheme
 import io.element.android.compound.theme.Theme
+import io.element.android.compound.theme.mapToAccentTheme
 import io.element.android.compound.theme.mapToTheme
 import io.element.android.libraries.architecture.Presenter
 import io.element.android.libraries.di.annotations.SessionCoroutineScope
@@ -52,6 +54,9 @@ class AdvancedSettingsPresenter(
         val theme = remember(isBlackThemeAllowed) {
             appPreferencesStore.getThemeFlow().mapToTheme(isBlackThemeAllowed)
         }.collectAsState(initial = Theme.System)
+        val accentTheme by remember {
+            appPreferencesStore.getAccentThemeFlow().mapToAccentTheme()
+        }.collectAsState(initial = AccentTheme.Default)
 
         val liveLocationMinimumDistanceUpdate by produceState<Int?>(null) {
             appPreferencesStore.getLiveLocationMinimumDistanceInMetersUpdateFlow().collect { value = it }
@@ -119,6 +124,9 @@ class AdvancedSettingsPresenter(
                         ThemeOption.Light -> appPreferencesStore.setTheme(Theme.Light.name)
                     }
                 }
+                is AdvancedSettingsEvent.SetAccentTheme -> sessionCoroutineScope.launch {
+                    appPreferencesStore.setAccentTheme(event.accentTheme.name)
+                }
                 is AdvancedSettingsEvent.SetHideInviteAvatars -> mediaPreviewConfigStateStore.setHideInviteAvatars(event.value)
                 is AdvancedSettingsEvent.SetTimelineMediaPreviewValue -> mediaPreviewConfigStateStore.setTimelineMediaPreviewValue(event.value)
                 is AdvancedSettingsEvent.SetLiveLocationMinimumDistanceUpdate -> sessionCoroutineScope.launch {
@@ -139,6 +147,7 @@ class AdvancedSettingsPresenter(
             mediaOptimizationState = mediaOptimizationState,
             theme = themeOption,
             availableThemeOptions = availableThemeOptions,
+            accentTheme = accentTheme,
             mediaPreviewConfigState = mediaPreviewConfigState,
             liveLocationMinimumDistanceUpdate = liveLocationMinimumDistanceUpdate,
             eventSink = ::handleEvent,

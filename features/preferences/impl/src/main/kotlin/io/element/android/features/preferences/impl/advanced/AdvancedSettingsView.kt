@@ -8,11 +8,16 @@
 
 package io.element.android.features.preferences.impl.advanced
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,7 +32,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import im.vector.app.features.analytics.plan.Interaction
+import io.element.android.compound.theme.AccentTheme
 import io.element.android.compound.theme.ElementTheme
+import io.element.android.compound.tokens.generated.compoundColorsDark
+import io.element.android.compound.tokens.generated.compoundColorsLight
 import io.element.android.features.preferences.impl.R
 import io.element.android.libraries.architecture.coverage.ExcludeFromCoverage
 import io.element.android.libraries.designsystem.components.dialogs.ListDialog
@@ -92,6 +100,29 @@ fun AdvancedSettingsView(
                 state.eventSink(AdvancedSettingsEvent.SetTheme(themeOption))
             }
         )
+        var showAccentThemeDialog by remember { mutableStateOf(false) }
+        ListItem(
+            content = {
+                Text(text = stringResource(id = R.string.screen_advanced_settings_colour_theme_title))
+            },
+            supportingContent = {
+                Text(text = stringResource(id = state.accentTheme.titleRes))
+            },
+            trailingContent = ListItemContent.Custom {
+                AccentThemeSwatch(state.accentTheme)
+            },
+            onClick = { showAccentThemeDialog = true },
+        )
+        if (showAccentThemeDialog) {
+            AccentThemeSelectorDialog(
+                selectedAccentTheme = state.accentTheme,
+                onSubmit = {
+                    state.eventSink(AdvancedSettingsEvent.SetAccentTheme(it))
+                    showAccentThemeDialog = false
+                },
+                onDismiss = { showAccentThemeDialog = false },
+            )
+        }
         ListItem(
             content = {
                 Text(text = stringResource(id = CommonStrings.action_view_source))
@@ -211,6 +242,76 @@ fun AdvancedSettingsView(
                 },
                 onOpenAppPermissionsClick = onOpenAppSettingsClick,
             )
+        }
+    }
+}
+
+/**
+ * A filled circle showing what the accent of [accentTheme] looks like.
+ *
+ * [AccentTheme.Default] has no palette of its own, so it falls back to the colour Compound ships,
+ * read straight from the generated tokens rather than from the theme: the active theme may already
+ * be overriding it.
+ */
+@Composable
+private fun AccentThemeSwatch(accentTheme: AccentTheme) {
+    val defaultAccent = if (ElementTheme.isLightTheme) {
+        compoundColorsLight.bgAccentRest
+    } else {
+        compoundColorsDark.bgAccentRest
+    }
+    Box(
+        modifier = Modifier
+            .size(24.dp)
+            .background(
+                color = accentTheme.palette?.rest ?: defaultAccent,
+                shape = CircleShape,
+            )
+            .border(
+                width = 1.dp,
+                color = ElementTheme.colors.borderInteractiveSecondary,
+                shape = CircleShape,
+            )
+    )
+}
+
+@Composable
+private fun AccentThemeSelectorDialog(
+    selectedAccentTheme: AccentTheme,
+    onSubmit: (AccentTheme) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var localSelectedAccentTheme by remember { mutableStateOf(selectedAccentTheme) }
+    ListDialog(
+        title = stringResource(R.string.screen_advanced_settings_colour_theme_title),
+        subtitle = stringResource(R.string.screen_advanced_settings_colour_theme_description),
+        onSubmit = { onSubmit(localSelectedAccentTheme) },
+        onDismissRequest = onDismiss,
+        applyPaddingToContents = false,
+    ) {
+        for (accentTheme in AccentTheme.entries) {
+            item(
+                key = accentTheme,
+                contentType = accentTheme,
+            ) {
+                ListItem(
+                    content = {
+                        Text(
+                            text = stringResource(accentTheme.titleRes),
+                            style = ElementTheme.typography.fontBodyLgMedium,
+                        )
+                    },
+                    leadingContent = ListItemContent.RadioButton(
+                        selected = accentTheme == localSelectedAccentTheme,
+                    ),
+                    trailingContent = ListItemContent.Custom {
+                        AccentThemeSwatch(accentTheme)
+                    },
+                    onClick = {
+                        localSelectedAccentTheme = accentTheme
+                    },
+                )
+            }
         }
     }
 }
