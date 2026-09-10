@@ -84,10 +84,28 @@ class AccentThemeTest {
     }
 
     @Test
+    fun `brandHeadline - only the Kultusministerium theme carries a wordmark`() {
+        assertThat(AccentTheme.KultusministeriumBW.brandHeadline?.title).isEqualTo("Kultusministerium")
+        assertThat(AccentTheme.KultusministeriumBW.brandHeadline?.subtitle).isEqualTo("Baden-Württemberg")
+        assertThat(AccentTheme.Default.brandHeadline).isNull()
+        assertThat(AccentTheme.Yellow.brandHeadline).isNull()
+        assertThat(AccentTheme.HackmasCastle.brandHeadline).isNull()
+    }
+
+    @Test
+    fun `every theme other than the default carries a palette`() {
+        AccentTheme.entries.filter { it != AccentTheme.Default }.forEach {
+            assertThat(it.palette).isNotNull()
+        }
+    }
+
+    @Test
     fun `contentColorOnAccent - dark content on bright accents, white on dark ones`() {
         // Yellow is bright, so content on top of it has to be dark.
         assertThat(contentColorOnAccent(AccentTheme.Yellow.palette!!.rest)).isNotEqualTo(Color.White)
         // The Håck ma's Castle purple is dark enough to carry white content.
         assertThat(contentColorOnAccent(AccentTheme.HackmasCastle.palette!!.rest)).isEqualTo(Color.White)
+        // The Baden-Württemberg lemon yellow is brighter still.
+        assertThat(contentColorOnAccent(AccentTheme.KultusministeriumBW.palette!!.rest)).isNotEqualTo(Color.White)
     }
 }

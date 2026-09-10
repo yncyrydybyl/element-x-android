@@ -20,6 +20,7 @@ import io.element.android.compound.colors.SemanticColorsLightDark
 import io.element.android.compound.colors.withAccent
 import io.element.android.compound.theme.AccentTheme
 import io.element.android.compound.theme.ElementTheme
+import io.element.android.compound.theme.LocalAccentTheme
 import io.element.android.compound.theme.Theme
 import io.element.android.compound.theme.mapToAccentTheme
 import io.element.android.compound.theme.mapToTheme
@@ -89,6 +90,7 @@ fun ElementThemeApp(
     }
     CompositionLocalProvider(
         LocalBuildMeta provides buildMeta,
+        LocalAccentTheme provides accentTheme,
     ) {
         ElementTheme(
             theme = theme,

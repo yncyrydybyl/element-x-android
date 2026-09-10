@@ -7,6 +7,7 @@
 
 package io.element.android.compound.theme
 
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -34,13 +35,26 @@ data class AccentPalette(
 )
 
 /**
+ * A wordmark a theme can show above the onboarding screen.
+ *
+ * These are institution names rather than prose, so they are not translated.
+ */
+data class BrandHeadline(
+    val title: String,
+    val subtitle: String? = null,
+)
+
+/**
  * The accent colour the user picked for the app.
  *
  * [Default] keeps the colours exactly as Compound ships them, which is why its palette is `null`:
  * the accent tokens are then left untouched rather than re-stated here, so Element's own brand
  * changes still arrive through the generated token files.
  */
-enum class AccentTheme(val palette: AccentPalette?) {
+enum class AccentTheme(
+    val palette: AccentPalette?,
+    val brandHeadline: BrandHeadline? = null,
+) {
     Default(palette = null),
 
     Yellow(
@@ -65,7 +79,29 @@ enum class AccentTheme(val palette: AccentPalette?) {
             onLightSubtle = Color(0xFF8659E6),
         )
     ),
+
+    /**
+     * The corporate design of the state of Baden-Württemberg: its lemon yellow paired with a warm
+     * near-black, as published for its authorities on corporate-design-bw.de.
+     */
+    KultusministeriumBW(
+        palette = AccentPalette(
+            rest = Color(0xFFFFFC00),
+            hovered = Color(0xFFE6E300),
+            pressed = Color(0xFFCCCA00),
+            bright = Color(0xFFFFFF66),
+            onLight = Color(0xFF8A8700),
+            onLightSubtle = Color(0xFFA3A000),
+        ),
+        brandHeadline = BrandHeadline(
+            title = "Kultusministerium",
+            subtitle = "Baden-Württemberg",
+        ),
+    ),
 }
+
+/** The accent theme in force, so that themed chrome outside of the colours can react to it. */
+val LocalAccentTheme = staticCompositionLocalOf { AccentTheme.Default }
 
 /**
  * Maps the persisted accent theme name to an [AccentTheme].
