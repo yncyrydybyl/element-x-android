@@ -50,6 +50,7 @@ internal val AccentTheme.titleRes: Int
         AccentTheme.Default -> R.string.screen_advanced_settings_colour_theme_default
         AccentTheme.Yellow -> R.string.screen_advanced_settings_colour_theme_yellow
         AccentTheme.HackmasCastle -> R.string.screen_advanced_settings_colour_theme_hackmas
+        AccentTheme.KultusministeriumBW -> R.string.screen_advanced_settings_colour_theme_kultusministerium_bw
     }
 
 enum class ThemeOption : DropdownOption {

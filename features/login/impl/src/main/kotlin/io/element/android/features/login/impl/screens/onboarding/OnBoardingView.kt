@@ -49,6 +49,7 @@ import io.element.android.libraries.designsystem.theme.components.Button
 import io.element.android.libraries.designsystem.theme.components.Icon
 import io.element.android.libraries.designsystem.theme.components.IconButton
 import io.element.android.libraries.designsystem.theme.components.IconSource
+import io.element.android.libraries.designsystem.theme.BrandHeadlineBanner
 import io.element.android.libraries.designsystem.theme.components.Text
 import io.element.android.libraries.designsystem.theme.components.TextButton
 import io.element.android.libraries.matrix.api.auth.OAuthDetails
@@ -138,43 +139,51 @@ private fun AddFirstAccountScaffold(
         modifier = modifier,
         renderBackground = state.onBoardingLogoResId == null,
         content = {
-            Box(
+            Column(
                 modifier = Modifier.fillMaxSize(),
             ) {
-                if (state.onBoardingLogoResId != null) {
-                    OnBoardingLogo(
-                        onBoardingLogoResId = state.onBoardingLogoResId,
-                    )
-                } else {
-                    OnBoardingContent(state = state)
-                }
-                if (state.showDeveloperSettings) {
-                    IconButton(
-                        onClick = onDeveloperSettingsClick,
-                        modifier = Modifier
-                            .align(Alignment.TopStart),
-                    ) {
-                        Icon(
-                            imageVector = CompoundIcons.SettingsSolid(),
-                            contentDescription = stringResource(CommonStrings.common_developer_options),
+                // Renders nothing unless the accent theme carries a wordmark.
+                BrandHeadlineBanner()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                ) {
+                    if (state.onBoardingLogoResId != null) {
+                        OnBoardingLogo(
+                            onBoardingLogoResId = state.onBoardingLogoResId,
                         )
+                    } else {
+                        OnBoardingContent(state = state)
+                    }
+                    if (state.showDeveloperSettings) {
+                        IconButton(
+                            onClick = onDeveloperSettingsClick,
+                            modifier = Modifier
+                                .align(Alignment.TopStart),
+                        ) {
+                            Icon(
+                                imageVector = CompoundIcons.SettingsSolid(),
+                                contentDescription = stringResource(CommonStrings.common_developer_options),
+                            )
+                        }
+                    }
+                    if (state.showBackButton) {
+                        // Add icon button to "navigate back"
+                        IconButton(
+                            onClick = onBackClick,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd),
+                        ) {
+                            Icon(
+                                imageVector = CompoundIcons.Close(),
+                                contentDescription = stringResource(CommonStrings.action_cancel),
+                            )
+                        }
                     }
                 }
-                if (state.showBackButton) {
-                    // Add icon button to "navigate back"
-                    IconButton(
-                        onClick = onBackClick,
-                        modifier = Modifier
-                            .align(Alignment.TopEnd),
-                    ) {
-                        Icon(
-                            imageVector = CompoundIcons.Close(),
-                            contentDescription = stringResource(CommonStrings.action_cancel),
-                        )
-                    }
-                }
+                loginView()
             }
-            loginView()
         },
         footer = {
             buttons()

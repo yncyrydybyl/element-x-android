@@ -33,6 +33,7 @@ open class AdvancedSettingsStatePreviewParam : PreviewParameterProvider<Advanced
             )),
             aAdvancedSettingsState(accentTheme = AccentTheme.Yellow),
             aAdvancedSettingsState(accentTheme = AccentTheme.HackmasCastle),
+            aAdvancedSettingsState(accentTheme = AccentTheme.KultusministeriumBW),
         )
 }
 
