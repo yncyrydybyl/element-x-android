@@ -135,19 +135,17 @@ private fun AddFirstAccountScaffold(
     onDeveloperSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    OnBoardingPage(
-        modifier = modifier,
-        renderBackground = state.onBoardingLogoResId == null,
-        content = {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                // Renders nothing unless the accent theme carries a wordmark.
-                BrandHeadlineBanner()
+    Column(
+        modifier = modifier.fillMaxSize(),
+    ) {
+        // Renders nothing unless the accent theme carries a wordmark.
+        BrandHeadlineBanner()
+        OnBoardingPage(
+            modifier = Modifier.weight(1f),
+            renderBackground = state.onBoardingLogoResId == null,
+            content = {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
+                    modifier = Modifier.fillMaxSize(),
                 ) {
                     if (state.onBoardingLogoResId != null) {
                         OnBoardingLogo(
@@ -183,12 +181,12 @@ private fun AddFirstAccountScaffold(
                     }
                 }
                 loginView()
+            },
+            footer = {
+                buttons()
             }
-        },
-        footer = {
-            buttons()
-        }
-    )
+        )
+    }
 }
 
 @Composable
